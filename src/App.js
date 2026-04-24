@@ -958,24 +958,28 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
               // Yükleniyor efekti için geçici bildirim
               bildirimGoster("⌛ Resim yükleniyor...", S.mavi);
               
-              const formData = new FormData();
-              formData.append("file", file);
-              formData.append("upload_preset", "OLIMPIYAT_PRESET"); // Cloudinary'den aldığın Preset adı
+             const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", "webpos"); // Az önce oluşturduğun preset
+            
+            try {
+              const res = await fetch("https://api.cloudinary.com/v1_1/daolkrc0r/image/upload", {
+                method: "POST",
+                body: formData
+              });
+              const data = await res.json();
               
-              try {
-                const res = await fetch("https://api.cloudinary.com/v1_1/CLOUD_ADIN/image/upload", {
-                  method: "POST",
-                  body: formData
-                });
-                const data = await res.json();
-                if (data.secure_url) {
-                  setYeniUrun(p => ({ ...p, resim: data.secure_url }));
-                  bildirimGoster("✅ Resim hazır!", S.yesil);
-                }
-              } catch (err) {
-                bildirimGoster("❌ Yükleme başarısız!", S.kirmizi);
+              if (data.secure_url) {
+                setYeniUrun(p => ({ ...p, resim: data.secure_url }));
+                bildirimGoster("✅ Resim yüklendi!", "#22c55e");
+              } else {
+                console.error("Yükleme hatası:", data);
+                bildirimGoster("❌ Resim yüklenemedi", "#ef4444");
               }
-            }} 
+            } catch (err) {
+              console.error("Fetch hatası:", err);
+              bildirimGoster("❌ Sunucu hatası!", "#ef4444");
+            }
           />
         </label>
         

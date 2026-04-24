@@ -649,7 +649,7 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
       background: S.bg, minHeight: "100vh", color: S.metin,
       fontFamily: "'Courier New', monospace",
       display: "flex", flexDirection: isMobile ? "column" : "row",
-      maxWidth: isMobile ? 480 : "100%", margin: "0 auto",
+      maxWidth: isMobile ? 480 : "100%", margin: "0 auto", overflow:"hidden",
     }}>
       <style>{`
         @keyframes slideDown { from { opacity:0; transform:translateX(-50%) translateY(-8px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
@@ -779,13 +779,16 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
   )}
 
   {/* Ürün Grid — KAYDIRILABİLİR ALAN */}
-  <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(5, 1fr)", gap: 6, alignContent: "start" }}>
-    {filtreliUrunler.length === 0 && kasaArama.trim() && (
-      <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "32px 0", color: S.soluk }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>🔍</div>
-        <div style={{ fontSize: 13 }}>"{kasaArama}" bulunamadı</div>
-      </div>
-    )}
+  <div style={{ 
+  flex: 1, // Kalan tüm boşluğu bu alan doldurur
+  overflowY: "auto", // Sadece burası kayar
+  padding: 8, 
+  display: "grid", 
+  gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(5, 1fr)", 
+  gap: 6, 
+  alignContent: "start",
+  WebkitOverflowScrolling: "touch" // Mobilde yağ gibi kaysın diye
+}}>
     {filtreliUrunler.map(urun => (
       <button key={urun.id} className="urun-btn" onClick={() => urunSec(urun)} 
         style={{ 
@@ -806,7 +809,13 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
 
   {/* Mobil Alt Sepet — Sabit */}
   {isMobile && (
-    <div style={{ background: "#0d0800", borderTop: "2px solid " + S.border, padding: "10px 12px", flexShrink: 0 }}>
+    <div style={{ 
+    flexShrink: 0, // Boyutunun küçülmesini engeller
+    background: "#0d0800", 
+    borderTop: "2px solid " + S.border, 
+    padding: "10px 12px",
+    zIndex: 10 
+  }}>
       {sepet.length > 0 && !odemeGosterge && (
         <div style={{ maxHeight: 110, overflowY: "auto", marginBottom: 8, borderBottom: "1px solid #2a1a08" }}>
           {sepet.map(item => (
@@ -978,7 +987,7 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
       }
     }} // onChange burada biter
   /> 
-</label> // label burada biter
+</label> 
         
         {/* Resmi Kaldır Butonu */}
         {yeniUrun.resim && (

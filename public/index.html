@@ -1,17 +1,1331 @@
 <!DOCTYPE html>
 <html lang="tr">
-  <head>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>🔥 BÜFE KASA</title>
 
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-    <title>Olimpiyat Büfe Kasa</title>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script> 
+<!-- Firebase Compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-  </head>
-  <body style="margin: 0; padding: 0; background-color: #0f0a04;">
-    <noscript>Bu uygulamayı çalıştırmak için JavaScript gereklidir.</noscript>
-    <div id="root"></div>
-  </body>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #0f0a04; font-family: 'Courier New', monospace; color: #f5e6c8; overflow-x: hidden; }
+  #app { min-height: 100vh; }
+
+  input, select, button, textarea { font-family: 'Courier New', monospace; }
+  input:focus, select:focus { outline: none; }
+  input::placeholder { color: #5a4030; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { opacity: 1; }
+
+  button { cursor: pointer; border: none; background: none; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #1a1208; }
+  ::-webkit-scrollbar-thumb { background: #5a3a14; border-radius: 2px; }
+
+  @keyframes slideDown {
+    from { opacity:0; transform:translateX(-50%) translateY(-8px); }
+    to   { opacity:1; transform:translateX(-50%) translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(14px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes fadeInFast {
+    from { opacity:0; transform:translateY(6px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* Genel kart hover */
+  .masa-kart { transition: border-color 0.15s, transform 0.15s; }
+  .masa-kart:hover { border-color: #FF6B35 !important; transform: translateY(-2px); }
+
+  .urun-btn { transition: transform 0.1s, background 0.1s; }
+  .urun-btn:active { transform: scale(0.93); }
+
+  .drag-item { cursor: grab; user-select: none; }
+  .drag-item:active { cursor: grabbing; }
+
+  /* Bildirim */
+  #bildirim {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    padding: 10px 22px; border-radius: 8px; z-index: 9999;
+    font-size: 13px; font-weight: bold; box-shadow: 0 4px 20px #0008;
+    white-space: nowrap; pointer-events: none;
+    animation: slideDown 0.2s ease;
+    display: none;
+  }
+
+  /* Yükleme ekranı */
+  #yukleme-ekrani {
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:10px;
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    position:fixed; inset:0; background:#000a; z-index:1000;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .modal-box {
+    background:#1a1208; border:2px solid #5a3a14; border-radius:12px;
+    padding:24px; width:320px; animation:fadeIn 0.2s ease;
+  }
+
+  /* Kategori scroll */
+  .kat-scroll { display:flex; gap:4px; overflow-x:auto; padding:6px 8px; scrollbar-width:none; }
+  .kat-scroll::-webkit-scrollbar { display:none; }
+
+  /* Sepet scroll */
+  .sepet-scroll { overflow-y:auto; flex:1; padding:8px 12px; }
+
+  /* Ürün grid */
+  #urun-grid {
+    flex:1; overflow-y:auto; padding:8px;
+    display:grid; gap:6px; align-content:start;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* Mobil alt sepet scroll */
+  #mobil-sepet-liste { max-height:110px; overflow-y:auto; margin-bottom:8px; }
+
+  /* Ayarlar menü buton */
+  .ayar-menu-btn {
+    background:#231808; border:1px solid #5a3a14; border-radius:10px;
+    padding:14px 16px; display:flex; align-items:center; gap:14px;
+    cursor:pointer; color:#f5e6c8; text-align:left; width:100%; margin-bottom:8px;
+    transition: border-color 0.15s;
+  }
+  .ayar-menu-btn:hover { border-color:#FF6B35; }
+
+  /* Tab input stili */
+  .form-inp {
+    width:100%; padding:12px 14px; background:#231808;
+    border:1px solid #5a3a14; border-radius:8px;
+    color:#f5e6c8; font-size:14px;
+    transition: border-color 0.15s;
+  }
+  .form-inp:focus { border-color:#FF6B35; }
+
+  /* Emoji buton */
+  .emoji-btn { font-size:20px; background:none; border:1px solid transparent; border-radius:4px; padding:3px; cursor:pointer; }
+  .emoji-btn.active { background:#3a2a00; border-color:#FFD700; }
+
+  /* Kategori chip */
+  .kat-chip {
+    padding:5px 12px; font-size:11px; font-weight:bold; white-space:nowrap;
+    background:#231808; color:#8a7060; border:1px solid #5a3a14;
+    border-radius:20px; cursor:pointer; font-family:'Courier New',monospace;
+    transition: all 0.1s;
+  }
+  .kat-chip.active { background:#FF6B35; color:#fff; border-color:#FF6B35; }
+
+  /* Numpad buton */
+  .np-btn {
+    padding:10px 0; font-size:14px; font-weight:bold;
+    background:#2a1a08; color:#f5e6c8; border:1px solid #5a3a14;
+    border-radius:5px; cursor:pointer; font-family:'Courier New',monospace;
+    transition: background 0.1s;
+  }
+  .np-btn:active { background:#3a2a14; }
+  .np-btn.clear { background:#4a0000; color:#ff8888; }
+  .np-btn.backspace { background:#2a1500; color:#ffaa66; }
+
+  /* Ürün kart */
+  .urun-kart {
+    background:#231808; border:2px solid #5a3a14; border-radius:8px;
+    padding:8px 4px; text-align:center; color:#f5e6c8;
+  }
+  .urun-kart.secili { background:#3a0a0a; border-color:#FF6B35; }
+
+  @media (max-width:767px) {
+    #urun-grid { grid-template-columns: repeat(3,1fr); }
+  }
+  @media (min-width:768px) {
+    #urun-grid { grid-template-columns: repeat(5,1fr); }
+    #desktop-sepet { display:flex !important; }
+    #mobil-alt { display:none !important; }
+    #kasa-wrap { flex-direction:row !important; }
+  }
+</style>
+</head>
+<body>
+<div id="bildirim"></div>
+<div id="app"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCj3VAqQuU_8BCoYWN3dl_XeUG1jJFl_ws",
+  authDomain: "olimpiyat-kasa.firebaseapp.com",
+  projectId: "olimpiyat-kasa",
+  storageBucket: "olimpiyat-kasa.firebasestorage.app",
+  messagingSenderId: "672591997535",
+  appId: "1:672591997535:web:d62b1aa7aa266b120f89ea",
+  measurementId: "G-DLYL617LNF"
+};
+
+const VARSAYILAN_URUNLER = [
+  {id:"u1",ad:"Yarım Döner",fiyat:80,emoji:"🌯",kategori:"Döner",aktif:true,sira:0},
+  {id:"u2",ad:"Tam Döner",fiyat:150,emoji:"🌯",kategori:"Döner",aktif:true,sira:1},
+  {id:"u3",ad:"Döner Tabak",fiyat:180,emoji:"🍽️",kategori:"Döner",aktif:true,sira:2},
+  {id:"u4",ad:"Ekmek Arası",fiyat:60,emoji:"🥙",kategori:"Döner",aktif:true,sira:3},
+  {id:"u5",ad:"Dürüm",fiyat:100,emoji:"🌮",kategori:"Döner",aktif:true,sira:4},
+  {id:"u6",ad:"Kaşarlı Döner",fiyat:120,emoji:"🧀",kategori:"Döner",aktif:true,sira:5},
+  {id:"u7",ad:"Tavuk Döner",fiyat:75,emoji:"🍗",kategori:"Döner",aktif:true,sira:6},
+  {id:"u8",ad:"Piyaz",fiyat:30,emoji:"🥗",kategori:"Yan Ürün",aktif:true,sira:7},
+  {id:"u9",ad:"Cacık",fiyat:25,emoji:"🥣",kategori:"Yan Ürün",aktif:true,sira:8},
+  {id:"u10",ad:"Pilav",fiyat:40,emoji:"🍚",kategori:"Yan Ürün",aktif:true,sira:9},
+  {id:"u11",ad:"Patates Kızartma",fiyat:50,emoji:"🍟",kategori:"Yan Ürün",aktif:true,sira:10},
+  {id:"u12",ad:"Çorba",fiyat:45,emoji:"🍜",kategori:"Yan Ürün",aktif:true,sira:11},
+  {id:"u13",ad:"Su",fiyat:10,emoji:"💧",kategori:"İçecek",aktif:true,sira:12},
+  {id:"u14",ad:"Ayran",fiyat:20,emoji:"🥛",kategori:"İçecek",aktif:true,sira:13},
+  {id:"u15",ad:"Kola",fiyat:35,emoji:"🥤",kategori:"İçecek",aktif:true,sira:14},
+  {id:"u16",ad:"Çay",fiyat:15,emoji:"🍵",kategori:"İçecek",aktif:true,sira:15},
+  {id:"u17",ad:"Ayran Büyük",fiyat:30,emoji:"🥛",kategori:"İçecek",aktif:true,sira:16},
+  {id:"u18",ad:"Baklava",fiyat:60,emoji:"🍮",kategori:"Tatlı",aktif:true,sira:17},
+  {id:"u19",ad:"Sütlaç",fiyat:50,emoji:"🍮",kategori:"Tatlı",aktif:true,sira:18},
+  {id:"u20",ad:"Sigara Böreği",fiyat:15,emoji:"🥐",kategori:"Atıştırmalık",aktif:true,sira:19},
+];
+
+const EMOJILER = ["🌯","🍽️","🥙","🌮","🧀","🍗","🥩","🥗","🥣","🍚","🍟","🍜","💧","🥛","🥤","🍵","☕","🧃","🍊","🍋","🍮","🧇","🍦","🥐","🥯","🫧","🌶️","🔥","⭐","🍕","🍔","🌽","🥦","🫙","🧂"];
+
+const S = {
+  bg:"#0f0a04", panel:"#1a1208", kart:"#231808", border:"#5a3a14",
+  altin:"#FFD700", turuncu:"#FF6B35", yesil:"#22c55e", kirmizi:"#ef4444",
+  metin:"#f5e6c8", soluk:"#8a7060", mavi:"#3b82f6", mor:"#8b5cf6",
+};
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let db = null, auth = null;
+let kullanici = null;
+let seciliMasa = null;
+
+// Kasa state
+let urunler = [];
+let sepet = [];
+let aktifKategori = "Tümü";
+let kasaArama = "";
+let seciliUrun = null;
+let adetInput = "";
+let odemeGosterge = false;
+let alinanPara = "";
+let kasaEkran = "kasa"; // kasa | ayarlar
+let ayarEkran = "menu";
+let duzenleUrun = null;
+let yeniUrun = {ad:"",fiyat:"",emoji:"🌯",kategori:"Döner",resim:null};
+let topluOran = "";
+let topluKategori = "Tümü";
+let aramaMetni = "";
+let emojiSecici = false;
+let tekliDuzenle = {};
+let surukleIdx = null;
+let satisSayaci = {gunluk:0,toplam:0,adet:0};
+let duzenleEkranResim = null;
+
+// Masalar state
+let masalar = [];
+let masaSepetler = {};
+let masaEkleAcik = false;
+let yeniMasaAd = "";
+let duzenleId = null;
+let duzenleAd = "";
+
+// Unsub fonksiyonları
+let unsubUrunler = null;
+let unsubSepet = null;
+let unsubMasalar = null;
+let unsubMasaSepetler = [];
+let unsubSayac = null;
+
+// ════════════════════════════════════════════════════
+// YARDIMCI
+// ════════════════════════════════════════════════════
+let bildirimTimer = null;
+function bildirimGoster(msg, renk="#1a6b1a") {
+  const el = document.getElementById("bildirim");
+  el.textContent = msg;
+  el.style.background = renk;
+  el.style.color = "#fff";
+  el.style.display = "block";
+  el.style.animation = "none";
+  requestAnimationFrame(() => { el.style.animation = "slideDown 0.2s ease"; });
+  clearTimeout(bildirimTimer);
+  bildirimTimer = setTimeout(() => { el.style.display = "none"; }, 2200);
+}
+
+function isMobile() { return window.innerWidth < 768; }
+
+function h(tag, attrs={}, ...children) {
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) {
+    if (k === "style" && typeof v === "object") Object.assign(el.style, v);
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else el.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c == null || c === false) continue;
+    el.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  return el;
+}
+
+function render(el) {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  app.appendChild(el);
+}
+
+// ════════════════════════════════════════════════════
+// FIREBASE INIT
+// ════════════════════════════════════════════════════
+function initFirebase() {
+  try {
+    if (!window.firebase) return false;
+    if (!window.firebase.apps?.length) window.firebase.initializeApp(FIREBASE_CONFIG);
+    db = window.firebase.firestore();
+    auth = window.firebase.auth();
+    return true;
+  } catch(e) { console.error(e); return false; }
+}
+
+async function ilkKurulumuYap(uid) {
+  const snap = await db.collection("masalar").limit(1).get();
+  if (!snap.empty) return;
+  const batch = db.batch();
+  for (let i=1;i<=10;i++) {
+    const ref = db.collection("masalar").doc(`masa_${i}`);
+    batch.set(ref, {ad:`Masa ${i}`,sira:i-1,olusturan:uid,aktif:true});
+  }
+  for (const u of VARSAYILAN_URUNLER) {
+    const ref = db.collection("urunler").doc(u.id);
+    batch.set(ref, {...u, olusturan:uid});
+  }
+  await batch.commit();
+}
+
+// ════════════════════════════════════════════════════
+// FİŞ YAZDIR
+// ════════════════════════════════════════════════════
+function fisYazdir(masa, sep, toplam) {
+  const w = window.open("","_blank","width=320,height=600");
+  const zaman = new Date().toLocaleString("tr-TR");
+  const satirlar = sep.map(i=>`<tr><td>${i.ad}</td><td style="text-align:center">${i.adet}</td><td style="text-align:right">${i.adet*i.fiyat}₺</td></tr>`).join("");
+  w.document.write(`<html><head><title>Fiş</title>
+  <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Courier New',monospace;font-size:12px;width:80mm;padding:4mm;}.center{text-align:center;}.bold{font-weight:bold;}.big{font-size:16px;}hr{border:1px dashed #000;margin:6px 0;}table{width:100%;border-collapse:collapse;}td{padding:2px 0;}.toplam{font-size:15px;font-weight:bold;}@media print{body{width:80mm;}}</style>
+  </head><body>
+  <div class="center bold big">🔥 BÜFE KASA</div>
+  <div class="center">${masa.ad}</div>
+  <div class="center" style="font-size:10px">${zaman}</div>
+  <div style="font-size:10px">Kasiyer: ${kullanici.ad}</div>
+  <hr>
+  <table><thead><tr><th style="text-align:left">Ürün</th><th>Adet</th><th style="text-align:right">Tutar</th></tr></thead>
+  <tbody>${satirlar}</tbody></table>
+  <hr>
+  <div class="center toplam">TOPLAM: ${toplam}₺</div>
+  <hr>
+  <div class="center" style="font-size:10px;margin-top:8px">Teşekkürler! Afiyet olsun.</div>
+  </body></html>`);
+  w.document.close();
+  setTimeout(()=>{w.print();w.close();},400);
+}
+
+// ════════════════════════════════════════════════════
+// GİRİŞ EKRANI
+// ════════════════════════════════════════════════════
+function renderGiris(mod="giris") {
+  let modState = mod;
+
+  function buildForm() {
+    const wrap = document.getElementById("app");
+    wrap.innerHTML = "";
+
+    const container = h("div",{style:{minHeight:"100vh",background:S.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}},
+      h("div",{style:{width:"100%",maxWidth:"380px",background:S.panel,border:"2px solid "+S.border,borderRadius:"16px",padding:"28px",boxShadow:"0 20px 60px #00000088",animation:"fadeIn 0.3s ease"}},
+        // Logo
+        h("div",{style:{textAlign:"center",marginBottom:"28px"}},
+          h("div",{style:{fontSize:"48px",marginBottom:"8px"}},"🔥"),
+          h("div",{style:{fontSize:"22px",fontWeight:"bold",color:S.altin,letterSpacing:"3px"}},"BÜFE KASA"),
+          h("div",{style:{fontSize:"11px",color:S.soluk,marginTop:"4px"}},"Yönetim Sistemi")
+        ),
+        // Tabs
+        h("div",{style:{display:"flex",gap:"4px",marginBottom:"22px",background:S.kart,borderRadius:"10px",padding:"4px"}},
+          ...[["giris","🔑 GİRİŞ"],["kayit","📝 KAYIT"]].map(([t,label])=>{
+            const btn = h("button",{style:{flex:"1",padding:"9px 0",borderRadius:"7px",border:"none",background:modState===t?S.turuncu:"transparent",color:modState===t?"#fff":S.soluk,fontSize:"13px",fontWeight:"bold",cursor:"pointer"}},label);
+            btn.addEventListener("click",()=>{ modState=t; buildForm(); });
+            return btn;
+          })
+        ),
+        // Ad (sadece kayıtta)
+        ...(modState==="kayit" ? [
+          h("div",{style:{marginBottom:"12px"}},
+            h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"5px"}},"Ad Soyad"),
+            h("input",{id:"inp-ad",class:"form-inp",type:"text",placeholder:"Ad Soyad"})
+          )
+        ] : []),
+        // Email
+        h("div",{style:{marginBottom:"12px"}},
+          h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"5px"}},"E-posta"),
+          h("input",{id:"inp-email",class:"form-inp",type:"email",placeholder:"ornek@mail.com"})
+        ),
+        // Şifre
+        h("div",{style:{marginBottom:"18px"}},
+          h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"5px"}},"Şifre"),
+          h("input",{id:"inp-sifre",class:"form-inp",type:"password",placeholder:"••••••"})
+        ),
+        // Hata
+        h("div",{id:"giris-hata",style:{display:"none",background:"#2a0a0a",border:"1px solid #7a2a2a",borderRadius:"7px",padding:"9px 12px",marginBottom:"14px",fontSize:"12px",color:S.kirmizi}}),
+        // Buton
+        h("button",{id:"giris-btn",style:{width:"100%",padding:"13px",background:"#8B1A1A",color:S.altin,border:"1px solid #cc3333",borderRadius:"8px",fontSize:"15px",fontWeight:"bold",cursor:"pointer",letterSpacing:"2px"}},
+          modState==="giris"?"🔑 GİRİŞ YAP":"📝 HESAP OLUŞTUR"
+        )
+      )
+    );
+    wrap.appendChild(container);
+
+    function hataGoster(msg) {
+      const el = document.getElementById("giris-hata");
+      el.textContent = msg; el.style.display = "block";
+    }
+
+    async function girisYap() {
+      const email = document.getElementById("inp-email").value.trim();
+      const sifre = document.getElementById("inp-sifre").value;
+      if (!email||!sifre) { hataGoster("Email ve şifre zorunlu"); return; }
+      const btn = document.getElementById("giris-btn");
+      btn.textContent="⏳ BEKLENIYOR..."; btn.disabled=true;
+      try {
+        const kred = await auth.signInWithEmailAndPassword(email,sifre);
+        const snap = await db.collection("kullanicilar").doc(kred.user.uid).get();
+        kullanici = {uid:kred.user.uid,email,ad:snap.data()?.ad||email};
+        renderMasalar();
+      } catch(e) {
+        const msg = e.code==="auth/user-not-found"?"Kullanıcı bulunamadı":e.code==="auth/wrong-password"?"Yanlış şifre":e.message;
+        hataGoster(msg);
+        btn.textContent="🔑 GİRİŞ YAP"; btn.disabled=false;
+      }
+    }
+
+    async function kayitOl() {
+      const ad = document.getElementById("inp-ad")?.value.trim()||"";
+      const email = document.getElementById("inp-email").value.trim();
+      const sifre = document.getElementById("inp-sifre").value;
+      if (!ad||!email||!sifre) { hataGoster("Tüm alanlar zorunlu"); return; }
+      if (sifre.length<6) { hataGoster("Şifre en az 6 karakter olmalı"); return; }
+      const btn = document.getElementById("giris-btn");
+      btn.textContent="⏳ BEKLENIYOR..."; btn.disabled=true;
+      try {
+        const kred = await auth.createUserWithEmailAndPassword(email,sifre);
+        await db.collection("kullanicilar").doc(kred.user.uid).set({ad,email,olusturma:new Date()});
+        await ilkKurulumuYap(kred.user.uid);
+        kullanici = {uid:kred.user.uid,email,ad};
+        renderMasalar();
+      } catch(e) {
+        const msg = e.code==="auth/email-already-in-use"?"Bu email zaten kayıtlı":e.message;
+        hataGoster(msg);
+        btn.textContent="📝 HESAP OLUŞTUR"; btn.disabled=false;
+      }
+    }
+
+    document.getElementById("giris-btn").addEventListener("click", modState==="giris"?girisYap:kayitOl);
+    document.getElementById("inp-sifre").addEventListener("keydown", e=>{ if(e.key==="Enter") modState==="giris"?girisYap():kayitOl(); });
+  }
+
+  buildForm();
+}
+
+// ════════════════════════════════════════════════════
+// MASALAR EKRANI
+// ════════════════════════════════════════════════════
+function renderMasalar() {
+  // Temizle
+  if (unsubMasalar) { unsubMasalar(); unsubMasalar=null; }
+  unsubMasaSepetler.forEach(u=>u());
+  unsubMasaSepetler=[];
+
+  masalar=[]; masaSepetler={}; masaEkleAcik=false; yeniMasaAd=""; duzenleId=null; duzenleAd="";
+
+  function buildMasalar() {
+    const mobile = isMobile();
+    const cols = mobile ? 2 : 4;
+
+    const app = document.getElementById("app");
+    app.innerHTML="";
+
+    // Header
+    const header = h("div",{style:{background:"#8B1A1A",padding:mobile?"12px 14px":"14px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"2px solid "+S.turuncu}},
+      h("div",{style:{display:"flex",alignItems:"center",gap:"10px"}},
+        h("span",{style:{fontSize:"24px"}},"🔥"),
+        h("div",{},
+          h("div",{style:{fontSize:mobile?"16px":"20px",fontWeight:"bold",color:S.altin,letterSpacing:"2px"}},"BÜFE KASA"),
+          h("div",{style:{fontSize:"10px",color:"#ffaa88"}},"Hoş geldin, "+kullanici.ad)
+        )
+      ),
+      h("div",{style:{display:"flex",gap:"8px"}},
+        h("button",{style:{background:"#1a5a1a",border:"1px solid #2a7a2a",borderRadius:"7px",color:"#aaffaa",padding:mobile?"7px 10px":"8px 14px",fontSize:mobile?"11px":"13px",fontWeight:"bold"},onclick:()=>{masaEkleAcik=true;buildMasalar();}},"+MASA"),
+        h("button",{style:{background:"#2a0808",border:"1px solid #5a1a1a",borderRadius:"7px",color:"#ff8888",padding:mobile?"7px 10px":"8px 14px",fontSize:mobile?"11px":"13px"},onclick:cikisYap},"⏏ ÇIKIŞ")
+      )
+    );
+
+    // Grid
+    const grid = h("div",{id:"masa-grid",style:{padding:mobile?"12px":"24px",display:"grid",gridTemplateColumns:`repeat(${cols},1fr)`,gap:mobile?"10px":"16px"}});
+
+    masalar.forEach(masa=>{
+      const sep = masaSepetler[masa.id]||{toplam:0,adet:0};
+      const dolu = sep.adet>0;
+
+      if (duzenleId===masa.id) {
+        const inp = h("input",{style:{flex:"1",padding:"6px 8px",background:S.bg,border:"1px solid "+S.turuncu,borderRadius:"5px",color:S.metin,fontSize:"12px",outline:"none"},value:duzenleAd});
+        const kart = h("div",{class:"masa-kart",style:{background:dolu?"#1a0a0a":S.kart,border:"2px solid "+(dolu?S.turuncu:S.border),borderRadius:"12px",padding:mobile?"12px":"18px"}},
+          h("div",{style:{display:"flex",gap:"6px"}},
+            inp,
+            h("button",{style:{background:"#1a5a1a",border:"none",borderRadius:"5px",color:"#aaffaa",padding:"6px 8px",fontSize:"12px"},onclick:async()=>{
+              if(!inp.value.trim())return;
+              await db.collection("masalar").doc(masa.id).update({ad:inp.value.trim()});
+              duzenleId=null; bildirimGoster("✅ Masa adı güncellendi"); buildMasalar();
+            }},"✓"),
+            h("button",{style:{background:"#2a0a0a",border:"none",borderRadius:"5px",color:"#ff8888",padding:"6px 8px",fontSize:"12px"},onclick:()=>{duzenleId=null;buildMasalar();}},"✕")
+          )
+        );
+        inp.addEventListener("keydown",async e=>{
+          if(e.key==="Enter"){
+            if(!inp.value.trim())return;
+            await db.collection("masalar").doc(masa.id).update({ad:inp.value.trim()});
+            duzenleId=null; bildirimGoster("✅ Masa adı güncellendi"); buildMasalar();
+          }
+          if(e.key==="Escape"){duzenleId=null;buildMasalar();}
+        });
+        grid.appendChild(kart);
+        setTimeout(()=>inp.focus(),50);
+        return;
+      }
+
+      const kart = h("div",{class:"masa-kart",style:{background:dolu?"#1a0a0a":S.kart,border:"2px solid "+(dolu?S.turuncu:S.border),borderRadius:"12px",padding:mobile?"12px":"18px",boxShadow:dolu?"0 0 16px #FF6B3533":"none",animation:"fadeInFast 0.3s ease"}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"8px"}},
+          h("div",{style:{flex:"1",cursor:"pointer"},onclick:()=>{ seciliMasa=masa; renderKasa(); }},
+            h("div",{style:{fontSize:mobile?"13px":"16px",fontWeight:"bold",marginBottom:"2px"}},masa.ad),
+            dolu
+              ? h("div",{style:{fontSize:"11px",color:S.altin,fontWeight:"bold"}},sep.toplam+"₺ · "+sep.adet+" kalem")
+              : h("div",{style:{fontSize:"10px",color:S.soluk}},"Boş")
+          ),
+          h("div",{style:{display:"flex",gap:"4px",marginLeft:"6px"}},
+            h("button",{style:{background:"#1a1a3a",border:"1px solid #3a3a7a",borderRadius:"5px",color:"#8888ff",padding:"4px 6px",fontSize:"10px"},onclick:()=>{duzenleId=masa.id;duzenleAd=masa.ad;buildMasalar();}},"✏️"),
+            h("button",{style:{background:"#2a0a0a",border:"1px solid #5a1a1a",borderRadius:"5px",color:S.kirmizi,padding:"4px 6px",fontSize:"10px"},onclick:async()=>{
+              if(!confirm(`"${masa.ad}" silinsin mi?`))return;
+              await db.collection("masalar").doc(masa.id).delete();
+              bildirimGoster("🗑 Masa silindi","#8B1A1A");
+            }},"🗑")
+          )
+        ),
+        h("button",{style:{width:"100%",padding:mobile?"8px":"10px",borderRadius:"7px",border:"none",background:dolu?"#FF6B35":"#2a1808",color:dolu?"#fff":S.soluk,fontWeight:"bold",fontSize:mobile?"11px":"13px",cursor:"pointer"},onclick:()=>{ seciliMasa=masa; renderKasa(); }},
+          dolu?"👁 GÖRÜNTÜLE":"🍽️ AÇ"
+        )
+      );
+      grid.appendChild(kart);
+    });
+
+    const page = h("div",{style:{minHeight:"100vh",background:S.bg,color:S.metin}},header,grid);
+
+    // Masa ekle modal
+    if (masaEkleAcik) {
+      const inp = h("input",{style:{width:"100%",padding:"11px 12px",background:S.kart,border:"1px solid "+S.border,borderRadius:"7px",color:S.metin,fontSize:"14px",outline:"none"},placeholder:"Masa adı..."});
+      const modal = h("div",{class:"modal-overlay"},
+        h("div",{class:"modal-box"},
+          h("div",{style:{fontSize:"16px",fontWeight:"bold",marginBottom:"16px"}},"➕ Yeni Masa"),
+          inp,
+          h("div",{style:{display:"flex",gap:"8px",marginTop:"14px"}},
+            h("button",{style:{flex:"1",padding:"10px",background:S.kart,border:"1px solid "+S.border,borderRadius:"7px",color:S.soluk,cursor:"pointer"},onclick:()=>{masaEkleAcik=false;buildMasalar();}},"İPTAL"),
+            h("button",{style:{flex:"2",padding:"10px",background:"#1a5a1a",color:"#aaffaa",border:"none",borderRadius:"7px",fontWeight:"bold",cursor:"pointer"},onclick:async()=>{
+              if(!inp.value.trim())return;
+              await db.collection("masalar").add({ad:inp.value.trim(),sira:masalar.length,aktif:true,olusturan:kullanici.uid});
+              bildirimGoster("✅ "+inp.value+" oluşturuldu");
+              masaEkleAcik=false; buildMasalar();
+            }},"✅ EKLE")
+          )
+        )
+      );
+      modal.addEventListener("click",e=>{ if(e.target===modal){masaEkleAcik=false;buildMasalar();} });
+      page.appendChild(modal);
+      setTimeout(()=>inp.focus(),50);
+    }
+
+    app.appendChild(page);
+  }
+
+  // Masaları dinle
+  unsubMasalar = db.collection("masalar").orderBy("sira").onSnapshot(snap=>{
+    masalar = snap.docs.map(d=>({id:d.id,...d.data()}));
+    buildMasalar();
+    // Sepet dinleyicileri
+    unsubMasaSepetler.forEach(u=>u());
+    unsubMasaSepetler=[];
+    masalar.forEach(m=>{
+      const unsub = db.collection("masalar").doc(m.id).collection("sepet").onSnapshot(s=>{
+        const items = s.docs.map(d=>d.data());
+        const toplam = items.reduce((a,i)=>a+i.fiyat*i.adet,0);
+        masaSepetler[m.id]={items,toplam,adet:items.length};
+        buildMasalar();
+      });
+      unsubMasaSepetler.push(unsub);
+    });
+  });
+}
+
+async function cikisYap() {
+  await auth.signOut();
+  kullanici=null; seciliMasa=null;
+  if(unsubMasalar){unsubMasalar();unsubMasalar=null;}
+  if(unsubUrunler){unsubUrunler();unsubUrunler=null;}
+  if(unsubSepet){unsubSepet();unsubSepet=null;}
+  if(unsubSayac){unsubSayac();unsubSayac=null;}
+  unsubMasaSepetler.forEach(u=>u());
+  unsubMasaSepetler=[];
+  renderGiris();
+}
+
+// ════════════════════════════════════════════════════
+// KASA EKRANI
+// ════════════════════════════════════════════════════
+function renderKasa() {
+  // Temizle masalar
+  if(unsubMasalar){unsubMasalar();unsubMasalar=null;}
+  unsubMasaSepetler.forEach(u=>u());
+  unsubMasaSepetler=[];
+
+  // Reset kasa state
+  urunler=[]; sepet=[]; aktifKategori="Tümü"; kasaArama="";
+  seciliUrun=null; adetInput=""; odemeGosterge=false; alinanPara="";
+  kasaEkran="kasa"; ayarEkran="menu"; duzenleUrun=null;
+  yeniUrun={ad:"",fiyat:"",emoji:"🌯",kategori:"Döner",resim:null};
+  topluOran=""; topluKategori="Tümü"; aramaMetni=""; emojiSecici=false;
+  tekliDuzenle={}; surukleIdx=null; satisSayaci={gunluk:0,toplam:0,adet:0};
+
+  // Ürünleri dinle
+  if(unsubUrunler){unsubUrunler();}
+  unsubUrunler = db.collection("urunler").orderBy("sira").onSnapshot(snap=>{
+    urunler = snap.docs.map(d=>({id:d.id,...d.data()}));
+    buildKasa();
+  });
+
+  // Sepeti dinle
+  if(unsubSepet){unsubSepet();}
+  unsubSepet = db.collection("masalar").doc(seciliMasa.id).collection("sepet").onSnapshot(snap=>{
+    sepet = snap.docs.map(d=>({_docId:d.id,...d.data()}));
+    buildKasa();
+  });
+
+  // Sayaç
+  if(unsubSayac){unsubSayac();}
+  unsubSayac = db.collection("istatistik").doc("genel").onSnapshot(snap=>{
+    if(snap.exists) satisSayaci=snap.data();
+    buildKasa();
+  });
+
+  buildKasa();
+}
+
+function buildKasa() {
+  if(kasaEkran==="ayarlar") { buildAyarlar(); return; }
+
+  const mobile = isMobile();
+  const toplam = sepet.reduce((a,i)=>a+i.fiyat*i.adet,0);
+  const para = alinanPara ? parseFloat(alinanPara) : 0;
+  const ustu = para - toplam;
+
+  const kategoriler = ["Tümü",...new Set(urunler.map(u=>u.kategori))];
+  const filtreliUrunler = urunler.filter(u=>{
+    if(!u.aktif)return false;
+    if(kasaArama.trim())return u.ad.toLowerCase().includes(kasaArama.toLowerCase());
+    return aktifKategori==="Tümü"||u.kategori===aktifKategori;
+  });
+
+  // ── Desktop Sepet Paneli ───────────────────────────
+  const desktopSepet = h("div",{id:"desktop-sepet",style:{width:"280px",background:"#0d0800",borderRight:"2px solid "+S.border,display:"flex",flexDirection:"column",height:"100vh"}},
+    // Başlık
+    h("div",{style:{padding:"14px 14px 6px",borderBottom:"1px solid "+S.border}},
+      h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"8px"}},
+        h("span",{style:{fontSize:"13px",fontWeight:"bold",color:S.altin}},"🛒 "+seciliMasa.ad),
+        h("button",{style:{background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"12px"},onclick:()=>{ seciliMasa=null; renderMasalar(); }},"← Masalar")
+      )
+    ),
+    // Sepet liste
+    h("div",{class:"sepet-scroll"},
+      sepet.length===0
+        ? h("div",{style:{color:S.soluk,fontSize:"12px",textAlign:"center",marginTop:"20px"}},"Sepet boş")
+        : null,
+      ...sepet.map(item=>h("div",{style:{display:"flex",alignItems:"center",gap:"6px",padding:"5px 0",borderBottom:"1px solid #2a1a08"}},
+        item.resim
+          ? h("img",{src:item.resim,style:{width:"24px",height:"24px",borderRadius:"4px",objectFit:"cover"}})
+          : h("span",{style:{fontSize:"14px"}},item.emoji||"🌯"),
+        h("div",{style:{flex:"1"}},
+          h("div",{style:{fontSize:"11px",fontWeight:"bold"}},item.ad),
+          h("div",{style:{fontSize:"9px",color:S.soluk}},item.ekleyen||"")
+        ),
+        h("button",{style:{background:"#2a0a0a",border:"none",color:S.kirmizi,fontSize:"14px",width:"22px",height:"22px",borderRadius:"4px",cursor:"pointer"},onclick:()=>adetDegistir(item,-1)},"−"),
+        h("span",{style:{fontSize:"12px",color:S.altin,minWidth:"16px",textAlign:"center"}},item.adet+""),
+        h("button",{style:{background:"#0a2a0a",border:"none",color:S.yesil,fontSize:"14px",width:"22px",height:"22px",borderRadius:"4px",cursor:"pointer"},onclick:()=>adetDegistir(item,1)},"+"),
+        h("span",{style:{fontSize:"11px",color:S.altin,minWidth:"45px",textAlign:"right"}},(item.adet*item.fiyat)+"₺"),
+        h("button",{style:{background:"none",border:"none",color:"#663333",cursor:"pointer",fontSize:"13px"},onclick:()=>sepettenCikar(item._docId)},"✕")
+      ))
+    ),
+    // Ödeme paneli
+    h("div",{style:{padding:"12px 14px",borderTop:"2px solid "+S.border}},
+      !odemeGosterge
+        ? h("div",{},
+            h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"10px"}},
+              h("span",{style:{fontSize:"12px",color:S.soluk}},"TOPLAM"),
+              h("span",{style:{fontSize:"24px",fontWeight:"bold",color:S.altin}},toplam+"₺")
+            ),
+            h("div",{style:{display:"flex",gap:"6px"}},
+              h("button",{style:{padding:"9px 10px",background:"#1a1a3a",color:"#8888ff",border:"1px solid #3a3a7a",borderRadius:"6px",cursor:"pointer",fontSize:"12px"},onclick:()=>fisYazdir(seciliMasa,sepet,toplam)},"🖨️"),
+              h("button",{style:{padding:"9px 10px",background:"#2a0000",color:"#ff8888",border:"1px solid #550000",borderRadius:"6px",cursor:"pointer",fontSize:"12px"},onclick:temizle},"🗑"),
+              h("button",{style:{flex:"1",padding:"9px 0",background:sepet.length?"#1a5a1a":"#1a2a0a",color:sepet.length?"#aaffaa":"#4a6a4a",border:"1px solid #2a7a2a",borderRadius:"6px",cursor:"pointer",fontSize:"13px",fontWeight:"bold"},onclick:()=>{ if(sepet.length){odemeGosterge=true;buildKasa();} }},"💳 ÖDEME")
+            )
+          )
+        : buildOdemePaneli(toplam,ustu,false)
+    )
+  );
+
+  // ── Sağ taraf (header + ürünler) ─────────────────
+  // Header
+  const headerEl = h("div",{style:{background:"#8B1A1A",padding:mobile?"10px 12px":"12px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"2px solid "+S.turuncu,flexShrink:"0"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:"8px"}},
+      mobile ? h("button",{style:{background:"none",border:"none",color:"#ffaa88",cursor:"pointer",fontSize:"18px"},onclick:()=>{ seciliMasa=null; renderMasalar(); }},"←") : null,
+      h("span",{style:{fontSize:"20px"}},"🔥"),
+      h("span",{style:{fontSize:mobile?"15px":"17px",fontWeight:"bold",color:S.altin,letterSpacing:"2px"}},seciliMasa.ad.toUpperCase())
+    ),
+    h("div",{style:{display:"flex",gap:"8px",alignItems:"center"}},
+      h("span",{style:{fontSize:"10px",color:"#ffaa88"}},new Date().toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"})),
+      !mobile ? h("button",{style:{background:"#5a1010",border:"1px solid #ff6b35",borderRadius:"6px",color:S.altin,padding:"5px 10px",cursor:"pointer",fontSize:"12px"},onclick:()=>{ seciliMasa=null; renderMasalar(); }},"← Masalar") : null,
+      h("button",{style:{background:"#5a1010",border:"1px solid #ff6b35",borderRadius:"6px",color:S.altin,padding:"5px 10px",cursor:"pointer",fontSize:"16px"},onclick:()=>{ kasaEkran="ayarlar"; ayarEkran="menu"; buildAyarlar(); }},"⚙️")
+    )
+  );
+
+  // Arama
+  const aramaWrap = h("div",{style:{padding:"8px 10px",background:"#130c04",borderBottom:"1px solid "+S.border,flexShrink:"0"}},
+    h("div",{style:{position:"relative",display:"flex",alignItems:"center"}},
+      h("span",{style:{position:"absolute",left:"10px",fontSize:"14px",color:S.soluk,pointerEvents:"none"}},"🔍"),
+      h("input",{id:"kasa-arama",style:{width:"100%",padding:"8px 32px",background:"#1c1208",border:"1px solid "+(kasaArama?S.turuncu:S.border),borderRadius:"8px",color:S.metin,fontSize:"13px",outline:"none"},placeholder:"Ürün ara...",value:kasaArama,
+        oninput:function(){kasaArama=this.value;if(kasaArama)aktifKategori="Tümü";buildKasa();}}),
+      kasaArama ? h("button",{style:{position:"absolute",right:"8px",background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"15px"},onclick:()=>{kasaArama="";buildKasa();}},"✕") : null
+    )
+  );
+
+  // Kategoriler
+  const katWrap = !kasaArama.trim()
+    ? h("div",{class:"kat-scroll",style:{flexShrink:"0",borderBottom:"1px solid "+S.border,background:"#150e04"}},
+        ...kategoriler.map(k=>{
+          const btn=h("button",{class:"kat-chip"+(aktifKategori===k?" active":"")},k);
+          btn.addEventListener("click",()=>{aktifKategori=k;buildKasa();});
+          return btn;
+        })
+      )
+    : null;
+
+  // Numpad
+  let numpadEl = null;
+  if(seciliUrun) {
+    numpadEl = h("div",{style:{background:"#1a0a0a",borderBottom:"2px solid "+S.turuncu,padding:"8px 12px",flexShrink:"0"}},
+      h("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px"}},
+        h("span",{style:{fontSize:"26px"}},seciliUrun.emoji||"🌯"),
+        h("div",{style:{flex:"1"}},
+          h("div",{style:{fontSize:"12px",fontWeight:"bold"}},seciliUrun.ad),
+          h("div",{style:{fontSize:"11px",color:S.soluk}},seciliUrun.fiyat+"₺ × "+(adetInput||"?")+" = ",
+            h("span",{style:{color:S.altin}},adetInput?(parseInt(adetInput)*seciliUrun.fiyat)+"₺":"0₺")
+          )
+        ),
+        h("div",{style:{fontSize:"26px",fontWeight:"bold",color:S.altin}},adetInput||"–")
+      ),
+      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:"4px"}},
+        ...["1","2","3","4","5","6","7","8","9","C","0","⌫"].map(t=>{
+          const cls="np-btn"+(t==="C"?" clear":t==="⌫"?" backspace":"");
+          const btn=h("button",{class:cls},t);
+          btn.addEventListener("click",()=>adetTus(t));
+          return btn;
+        })
+      ),
+      h("button",{style:{width:"100%",marginTop:"6px",padding:"11px",fontSize:"14px",fontWeight:"bold",background:"#1a5a1a",color:"#aaffaa",border:"1px solid #2a8a2a",borderRadius:"6px",cursor:"pointer",letterSpacing:"1px"},onclick:()=>adetTus("✓")},"✓ SEPETE EKLE")
+    );
+  }
+
+  // Ürün Grid
+  const gridEl = h("div",{id:"urun-grid"},
+    ...filtreliUrunler.map(urun=>{
+      const secilik = seciliUrun?.id===urun.id;
+      const btn = h("button",{class:"urun-btn urun-kart"+(secilik?" secili":"")},
+        urun.resim
+          ? h("img",{src:urun.resim,style:{width:"100%",height:"50px",objectFit:"cover",borderRadius:"4px",marginBottom:"4px"}})
+          : h("div",{style:{fontSize:"26px",marginBottom:"2px"}},urun.emoji||"🌯"),
+        h("div",{style:{fontSize:"10px",fontWeight:"bold",lineHeight:"1.2"}},urun.ad),
+        h("div",{style:{fontSize:"11px",color:S.altin}},urun.fiyat+"₺")
+      );
+      btn.addEventListener("click",()=>{
+        if(seciliUrun?.id===urun.id){adetTus("✓");return;}
+        seciliUrun=urun; adetInput="1"; buildKasa();
+      });
+      return btn;
+    })
+  );
+
+  // Mobil alt
+  let mobilAlt = null;
+  if(mobile) {
+    const sepetListe = sepet.length>0&&!odemeGosterge
+      ? h("div",{id:"mobil-sepet-liste"},
+          ...sepet.map(item=>h("div",{style:{display:"flex",alignItems:"center",gap:"6px",padding:"3px 0",borderBottom:"1px solid #2a1a08"}},
+            h("span",{style:{fontSize:"13px"}},item.emoji||"🌯"),
+            h("div",{style:{flex:"1"}},h("span",{style:{fontSize:"11px"}},item.ad)),
+            h("button",{style:{background:"#2a0a0a",border:"none",color:S.kirmizi,width:"20px",height:"20px",borderRadius:"4px",cursor:"pointer"},onclick:()=>adetDegistir(item,-1)},"−"),
+            h("span",{style:{fontSize:"11px",color:S.altin,minWidth:"14px",textAlign:"center"}},item.adet+""),
+            h("button",{style:{background:"#0a2a0a",border:"none",color:S.yesil,width:"20px",height:"20px",borderRadius:"4px",cursor:"pointer"},onclick:()=>adetDegistir(item,1)},"+"),
+            h("span",{style:{fontSize:"11px",color:S.altin,minWidth:"42px",textAlign:"right"}},(item.adet*item.fiyat)+"₺")
+          ))
+        )
+      : null;
+
+    mobilAlt = h("div",{id:"mobil-alt",style:{flexShrink:"0",background:"#0d0800",borderTop:"2px solid "+S.border,padding:"10px 12px",zIndex:"10"}},
+      sepetListe,
+      !odemeGosterge
+        ? h("div",{style:{display:"flex",alignItems:"center",gap:"8px"}},
+            h("div",{style:{flex:"1"}},
+              h("div",{style:{fontSize:"9px",color:S.soluk}},"TOPLAM"),
+              h("div",{style:{fontSize:"24px",fontWeight:"bold",color:S.altin}},toplam+"₺")
+            ),
+            h("button",{style:{padding:"10px 11px",background:"#1a1a3a",color:"#8888ff",border:"1px solid #3a3a7a",borderRadius:"6px",cursor:"pointer",fontSize:"14px"},onclick:()=>fisYazdir(seciliMasa,sepet,toplam)},"🖨️"),
+            h("button",{style:{padding:"10px 11px",background:"#2a0000",color:"#ff8888",border:"1px solid #550000",borderRadius:"6px",cursor:"pointer",fontSize:"12px"},onclick:temizle},"🗑"),
+            h("button",{style:{padding:"10px 18px",background:sepet.length?"#1a5a1a":"#1a2a0a",color:sepet.length?"#aaffaa":"#4a6a4a",border:"1px solid #2a7a2a",borderRadius:"6px",cursor:"pointer",fontSize:"13px",fontWeight:"bold"},onclick:()=>{ if(sepet.length){odemeGosterge=true;buildKasa();} }},"💳 ÖDEME")
+          )
+        : buildOdemePaneli(toplam,ustu,true)
+    );
+  }
+
+  // Sağ wrap
+  const sagWrap = h("div",{style:{flex:"1",display:"flex",flexDirection:"column",height:mobile?"auto":"100vh",overflow:"hidden"}},
+    headerEl, aramaWrap, katWrap, numpadEl, gridEl, mobilAlt
+  );
+
+  const page = h("div",{id:"kasa-wrap",style:{background:S.bg,minHeight:"100vh",color:S.metin,display:"flex",flexDirection:mobile?"column":"row",maxWidth:mobile?"480px":"100%",margin:"0 auto",overflow:"hidden"}},
+    !mobile ? desktopSepet : null,
+    sagWrap
+  );
+
+  const app = document.getElementById("app");
+  app.innerHTML="";
+  app.appendChild(page);
+}
+
+function buildOdemePaneli(toplam,ustu,isMob) {
+  const inp = h("input",{type:"number",placeholder:isMob?"Alınan para...":"0",value:alinanPara,
+    style:{width:"100%",padding:isMob?"9px":"8px",fontSize:"18px",fontWeight:"bold",background:isMob?"#0d0800":S.bg,border:"1px solid "+S.border,borderRadius:"6px",color:S.altin,textAlign:"right",outline:"none"},
+    oninput:function(){alinanPara=this.value;buildKasa();}});
+
+  const ustEl = alinanPara
+    ? h("div",{style:{background:ustu>=0?"#0a2a0a":"#2a0a0a",border:"1px solid "+(ustu>=0?"#2a7a2a":"#7a2a2a"),borderRadius:"6px",padding:"6px 10px",margin:"6px 0",display:"flex",justifyContent:"space-between"}},
+        h("span",{style:{fontSize:"11px",color:S.soluk}},"ÜSTÜ:"),
+        h("span",{style:{fontSize:"18px",fontWeight:"bold",color:ustu>=0?S.yesil:S.kirmizi}},ustu>=0?ustu+"₺":"YETERSİZ")
+      )
+    : null;
+
+  return h("div",{},
+    isMob ? h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"8px"}},
+      h("span",{style:{color:S.soluk,fontSize:"12px"}},"TOPLAM:"),
+      h("span",{style:{color:S.altin,fontSize:"20px",fontWeight:"bold"}},toplam+"₺")
+    ) : null,
+    inp, ustEl,
+    h("div",{style:{display:"flex",gap:"8px",marginTop:"6px"}},
+      h("button",{style:{flex:"1",padding:"9px 0",background:S.kart,color:S.soluk,border:"1px solid "+S.border,borderRadius:"6px",cursor:"pointer"},onclick:()=>{odemeGosterge=false;alinanPara="";buildKasa();}},"← GERİ"),
+      h("button",{style:{flex:"2",padding:"9px 0",fontWeight:"bold",fontSize:"13px",background:ustu>=0&&alinanPara?"#1a5a1a":"#1a2a0a",color:ustu>=0&&alinanPara?"#aaffaa":"#4a6a4a",border:"1px solid #2a7a2a",borderRadius:"6px",cursor:"pointer"},onclick:tahsilEt},"✓ TAHSİL ET")
+    )
+  );
+}
+
+// ── Kasa işlemleri ────────────────────────────────
+async function adetTus(tus) {
+  if(tus==="C"){adetInput="";seciliUrun=null;buildKasa();return;}
+  if(tus==="⌫"){adetInput=adetInput.slice(0,-1);buildKasa();return;}
+  if(tus==="✓"){
+    if(!seciliUrun||!adetInput||parseInt(adetInput)<=0)return;
+    const adet=parseInt(adetInput);
+    const mevcutDoc=sepet.find(i=>i.id===seciliUrun.id);
+    if(mevcutDoc){
+      await db.collection("masalar").doc(seciliMasa.id).collection("sepet").doc(mevcutDoc._docId)
+        .update({adet:mevcutDoc.adet+adet,sonEkleyen:kullanici.ad,guncelleme:new Date()});
+    } else {
+      await db.collection("masalar").doc(seciliMasa.id).collection("sepet").add({
+        id:seciliUrun.id,ad:seciliUrun.ad,fiyat:seciliUrun.fiyat,
+        emoji:seciliUrun.emoji,resim:seciliUrun.resim||null,
+        adet,ekleyen:kullanici.ad,eklemeZamani:new Date()
+      });
+    }
+    bildirimGoster("✓ "+seciliUrun.ad+" x"+adet+" eklendi");
+    seciliUrun=null;adetInput="";return;
+  }
+  adetInput=(adetInput+tus).replace(/^0+(\d)/,"$1");
+  buildKasa();
+}
+
+async function adetDegistir(item,delta){
+  const yeniAdet=Math.max(1,item.adet+delta);
+  await db.collection("masalar").doc(seciliMasa.id).collection("sepet").doc(item._docId)
+    .update({adet:yeniAdet,sonEkleyen:kullanici.ad,guncelleme:new Date()});
+}
+
+async function sepettenCikar(docId){
+  await db.collection("masalar").doc(seciliMasa.id).collection("sepet").doc(docId).delete();
+}
+
+async function temizle(){
+  const batch=db.batch();
+  sepet.forEach(i=>batch.delete(db.collection("masalar").doc(seciliMasa.id).collection("sepet").doc(i._docId)));
+  await batch.commit();
+  odemeGosterge=false;alinanPara="";
+}
+
+async function tahsilEt(){
+  const toplam=sepet.reduce((a,i)=>a+i.fiyat*i.adet,0);
+  const para=parseFloat(alinanPara)||0;
+  const ustu=para-toplam;
+  if(ustu<0||!alinanPara||sepet.length===0)return;
+  await db.collection("satislar").add({masaId:seciliMasa.id,masaAd:seciliMasa.ad,kasiyer:kullanici.ad,uid:kullanici.uid,toplam,sepet,tarih:new Date()});
+  await db.collection("istatistik").doc("genel").set({
+    gunluk:(satisSayaci.gunluk||0)+toplam,
+    toplam:(satisSayaci.toplam||0)+toplam,
+    adet:(satisSayaci.adet||0)+1
+  },{merge:true});
+  bildirimGoster("✅ "+toplam+"₺ tahsil edildi! Üstü: "+ustu+"₺");
+  await temizle();
+}
+
+// ════════════════════════════════════════════════════
+// AYARLAR EKRANI
+// ════════════════════════════════════════════════════
+function buildAyarlar() {
+  const mobile = isMobile();
+  const app = document.getElementById("app");
+  app.innerHTML="";
+
+  const header = h("div",{style:{background:"#1a0a30",padding:"12px 16px",display:"flex",alignItems:"center",gap:"12px",borderBottom:"2px solid #7b35ff"}},
+    h("button",{style:{background:"none",border:"none",color:"#aaa",cursor:"pointer",fontSize:"20px"},onclick:()=>{kasaEkran="kasa";buildKasa();}},"←"),
+    h("span",{style:{fontSize:"16px",fontWeight:"bold",color:"#c0a0ff",letterSpacing:"1px"}},"⚙️ AYARLAR")
+  );
+
+  let icerik;
+  if(ayarEkran==="menu") icerik = buildAyarMenu();
+  else if(ayarEkran==="urunEkle") icerik = buildUrunEkle();
+  else if(ayarEkran==="urunler") icerik = buildUrunListesi();
+  else if(ayarEkran==="urunDuzenle") icerik = buildUrunDuzenle();
+  else if(ayarEkran==="topluFiyat") icerik = buildTopluFiyat();
+  else if(ayarEkran==="tekliFiyat") icerik = buildTekliFiyat();
+  else if(ayarEkran==="siralama") icerik = buildSiralama();
+  else icerik = buildAyarMenu();
+
+  const page = h("div",{style:{background:S.bg,minHeight:"100vh",color:S.metin,maxWidth:mobile?"480px":"720px",margin:"0 auto"}},header,icerik);
+  app.appendChild(page);
+}
+
+function buildAyarMenu() {
+  const statsGrid = h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"16px"}},
+    ...[
+      {label:"Günlük Ciro",val:(satisSayaci.gunluk||0)+"₺",ico:"📈"},
+      {label:"Toplam İşlem",val:(satisSayaci.adet||0)+" adet",ico:"🧾"},
+      {label:"Toplam Ciro",val:(satisSayaci.toplam||0)+"₺",ico:"💰"},
+      {label:"Aktif Ürün",val:urunler.filter(u=>u.aktif).length+" adet",ico:"📦"},
+    ].map(s=>h("div",{style:{background:S.kart,border:"1px solid "+S.border,borderRadius:"8px",padding:"10px 12px"}},
+      h("div",{style:{fontSize:"18px"}},s.ico),
+      h("div",{style:{fontSize:"10px",color:S.soluk}},s.label),
+      h("div",{style:{fontSize:"15px",fontWeight:"bold",color:S.altin}},s.val)
+    ))
+  );
+
+  const menuItems = [
+    {ico:"➕",label:"Yeni Ürün Ekle",desc:"Menüye yeni ürün ekle",tik:()=>{yeniUrun={ad:"",fiyat:"",emoji:"🌯",kategori:"Döner",resim:null};emojiSecici=false;ayarEkran="urunEkle";buildAyarlar();}},
+    {ico:"📋",label:"Ürünleri Yönet",desc:urunler.length+" ürün · düzenle, sil, aktif/pasif",tik:()=>{ayarEkran="urunler";buildAyarlar();}},
+    {ico:"💹",label:"Toplu Fiyat Güncelle",desc:"Yüzde zam / indirim",tik:()=>{ayarEkran="topluFiyat";buildAyarlar();}},
+    {ico:"✏️",label:"Tekli Fiyat Güncelle",desc:"Her ürünün fiyatını tek tek gir",tik:()=>{ayarEkran="tekliFiyat";buildAyarlar();}},
+    {ico:"↕️",label:"Ürün Sıralaması",desc:"Sürükle-bırak ile sırala",tik:()=>{ayarEkran="siralama";buildAyarlar();}},
+  ];
+
+  return h("div",{style:{padding:"16px"}},
+    statsGrid,
+    ...menuItems.map(m=>h("button",{class:"ayar-menu-btn",onclick:m.tik},
+      h("span",{style:{fontSize:"22px"}},m.ico),
+      h("div",{},
+        h("div",{style:{fontSize:"13px",fontWeight:"bold"}},m.label),
+        h("div",{style:{fontSize:"11px",color:S.soluk}},m.desc)
+      ),
+      h("span",{style:{marginLeft:"auto",color:S.soluk}},"›")
+    ))
+  );
+}
+
+function buildUrunEkle() {
+  const katlar = [...new Set(urunler.map(u=>u.kategori))];
+  let yeniKatMode = false;
+
+  function rebuildUrunEkle() { ayarEkran="urunEkle"; buildAyarlar(); }
+
+  const onizleme = h("div",{style:{textAlign:"center",marginBottom:"16px"}},
+    h("div",{style:{position:"relative",width:"90px",height:"90px",margin:"0 auto"}},
+      h("div",{id:"onizleme-kap",style:{width:"100%",height:"100%",borderRadius:"16px",border:"2px dashed "+(yeniUrun.resim?S.yesil:S.border),display:"flex",alignItems:"center",justifyContent:"center",background:S.kart,overflow:"hidden",cursor:"pointer"}},
+        yeniUrun.resim
+          ? h("img",{src:yeniUrun.resim,style:{width:"100%",height:"100%",objectFit:"cover"}})
+          : h("span",{style:{fontSize:"40px"}},yeniUrun.emoji)
+      ),
+      // Resim yükleme
+      h("label",{style:{position:"absolute",bottom:"-5px",right:"-5px",background:S.turuncu,width:"30px",height:"30px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",border:"2px solid "+S.bg}},
+        h("span",{style:{fontSize:"16px"}},"📷"),
+        h("input",{type:"file",accept:"image/*",style:{display:"none"},onchange:async function(){
+          const file=this.files[0];if(!file)return;
+          bildirimGoster("⌛ Resim yükleniyor...",S.mavi);
+          const formData=new FormData();
+          formData.append("file",file);
+          formData.append("upload_preset","webpos");
+          try{
+            const res=await fetch("https://api.cloudinary.com/v1_1/daolkrc0r/image/upload",{method:"POST",body:formData});
+            const data=await res.json();
+            if(data.secure_url){yeniUrun.resim=data.secure_url;bildirimGoster("✅ Resim yüklendi!",S.yesil);}
+            else bildirimGoster("❌ Resim yüklenemedi",S.kirmizi);
+          }catch(err){bildirimGoster("❌ Sunucu hatası!",S.kirmizi);}
+          rebuildUrunEkle();
+        }})
+      ),
+      yeniUrun.resim
+        ? h("button",{style:{position:"absolute",top:"-5px",right:"-5px",background:S.kirmizi,border:"none",borderRadius:"50%",width:"20px",height:"20px",color:"#fff",fontSize:"10px",cursor:"pointer"},onclick:()=>{yeniUrun.resim=null;rebuildUrunEkle();}},"✕")
+        : null
+    ),
+    h("div",{style:{fontSize:"10px",color:S.soluk,marginTop:"8px"}},yeniUrun.resim?"Resim yüklendi":"Emoji seç veya resim yükle"),
+    // Emoji aç/kapat
+    !yeniUrun.resim ? h("button",{style:{marginTop:"6px",background:S.kart,border:"1px solid "+S.border,borderRadius:"6px",color:S.metin,padding:"4px 10px",fontSize:"11px",cursor:"pointer"},onclick:()=>{emojiSecici=!emojiSecici;rebuildUrunEkle();}},emojiSecici?"Kapat ▲":"Emoji Seç ▼") : null
+  );
+
+  const emojiPanel = emojiSecici&&!yeniUrun.resim
+    ? h("div",{style:{display:"flex",flexWrap:"wrap",gap:"6px",background:S.panel,border:"1px solid "+S.border,borderRadius:"10px",padding:"10px",marginBottom:"16px",maxHeight:"120px",overflowY:"auto"}},
+        ...EMOJILER.map(e=>{
+          const btn=h("button",{class:"emoji-btn"+(yeniUrun.emoji===e?" active":"")},e);
+          btn.addEventListener("click",()=>{yeniUrun.emoji=e;emojiSecici=false;rebuildUrunEkle();});
+          return btn;
+        })
+      )
+    : null;
+
+  const adInp = h("input",{class:"form-inp",type:"text",placeholder:"Örn: Arnavut Ciğeri",value:yeniUrun.ad,oninput:function(){yeniUrun.ad=this.value;}});
+  const fiyatInp = h("input",{class:"form-inp",type:"number",placeholder:"0.00",value:yeniUrun.fiyat,oninput:function(){yeniUrun.fiyat=this.value;}});
+
+  const katSel = h("select",{style:{width:"100%",padding:"12px",background:S.kart,border:"1px solid "+S.border,borderRadius:"8px",color:S.metin,fontSize:"14px",outline:"none"},onchange:function(){
+    if(this.value==="__yeni__"){yeniKatMode=true;}
+    else{yeniUrun.kategori=this.value;yeniKatMode=false;}
+    rebuildUrunEkle();
+  }},
+    ...katlar.map(k=>h("option",{value:k,selected:yeniUrun.kategori===k&&!yeniKatMode?true:undefined},k)),
+    h("option",{value:"__yeni__"},"+ Yeni Kategori Oluştur")
+  );
+
+  const yeniKatInp = yeniKatMode
+    ? h("input",{class:"form-inp",type:"text",placeholder:"Kategori adını girin...",style:{marginTop:"8px",borderColor:S.turuncu},autofocus:"true",oninput:function(){yeniUrun.kategori=this.value;}})
+    : null;
+
+  return h("div",{style:{padding:"16px"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}},
+      h("button",{style:{background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"20px"},onclick:()=>{ayarEkran="menu";buildAyarlar();}},"←"),
+      h("span",{style:{fontSize:"14px",fontWeight:"bold"}},"➕ Yeni Ürün Ekle")
+    ),
+    onizleme,
+    emojiPanel,
+    h("div",{style:{marginBottom:"12px"}},
+      h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"5px"}},"Ürün Adı *"),
+      adInp
+    ),
+    h("div",{style:{marginBottom:"12px"}},
+      h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"5px"}},"Fiyat (₺) *"),
+      fiyatInp
+    ),
+    h("div",{style:{marginBottom:"20px"}},
+      h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"5px"}},"Kategori:"),
+      katSel,
+      yeniKatInp
+    ),
+    h("button",{style:{width:"100%",padding:"15px",background:"#1a5a1a",color:"#aaffaa",border:"1px solid #2a7a2a",borderRadius:"10px",fontSize:"15px",fontWeight:"bold",cursor:"pointer",letterSpacing:"1px"},onclick:async()=>{
+      if(!yeniUrun.ad||!yeniUrun.fiyat){bildirimGoster("Ad ve fiyat zorunlu!","#8B1A1A");return;}
+      const sira=urunler.length;
+      await db.collection("urunler").add({...yeniUrun,fiyat:parseFloat(yeniUrun.fiyat),aktif:true,sira,olusturan:kullanici.ad});
+      bildirimGoster("✅ "+yeniUrun.ad+" eklendi!");
+      yeniUrun={ad:"",fiyat:"",emoji:"🌯",kategori:"Döner",resim:null};
+      ayarEkran="urunler";buildAyarlar();
+    }},"✅ ÜRÜNÜ KAYDET")
+  );
+}
+
+function buildUrunListesi() {
+  return h("div",{style:{padding:"12px"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px"}},
+      h("button",{style:{background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"18px"},onclick:()=>{ayarEkran="menu";buildAyarlar();}},"←"),
+      h("span",{style:{fontSize:"14px",fontWeight:"bold",flex:"1"}},"📋 Ürün Yönetimi"),
+      h("button",{style:{background:S.turuncu,border:"none",borderRadius:"6px",color:"#fff",padding:"6px 10px",cursor:"pointer",fontSize:"11px",fontWeight:"bold"},onclick:()=>{ayarEkran="urunEkle";buildAyarlar();}},"+EKLE")
+    ),
+    h("input",{class:"form-inp",type:"text",placeholder:"🔍 Ürün ara...",value:aramaMetni,style:{marginBottom:"10px"},oninput:function(){aramaMetni=this.value;buildAyarlar();}}),
+    ...urunler.filter(u=>u.ad.toLowerCase().includes(aramaMetni.toLowerCase())).map(u=>
+      h("div",{style:{background:S.kart,border:"1px solid "+(u.aktif?S.border:"#3a2a1a"),borderRadius:"8px",padding:"10px 12px",marginBottom:"6px",display:"flex",alignItems:"center",gap:"10px",opacity:u.aktif?"1":"0.5"}},
+        u.resim ? h("img",{src:u.resim,style:{width:"40px",height:"40px",borderRadius:"6px",objectFit:"cover"}}) : h("span",{style:{fontSize:"22px"}},u.emoji||"🌯"),
+        h("div",{style:{flex:"1"}},
+          h("div",{style:{fontSize:"12px",fontWeight:"bold"}},u.ad),
+          h("div",{style:{fontSize:"10px",color:S.soluk}},u.kategori+" · ",h("span",{style:{color:S.altin}},u.fiyat+"₺"))
+        ),
+        h("button",{style:{background:u.aktif?"#0a2a0a":"#2a1a08",border:"1px solid "+(u.aktif?"#2a7a2a":S.border),borderRadius:"5px",color:u.aktif?S.yesil:S.soluk,padding:"4px 8px",cursor:"pointer",fontSize:"11px"},onclick:async()=>{await db.collection("urunler").doc(u.id).update({aktif:!u.aktif});}},u.aktif?"✓":"✗"),
+        h("button",{style:{background:"#1a1a3a",border:"1px solid #3a3a7a",borderRadius:"5px",color:"#8888ff",padding:"4px 7px",cursor:"pointer",fontSize:"11px"},onclick:()=>{duzenleUrun={...u};ayarEkran="urunDuzenle";buildAyarlar();}},"✏️"),
+        h("button",{style:{background:"#2a0a0a",border:"1px solid #5a1a1a",borderRadius:"5px",color:S.kirmizi,padding:"4px 7px",cursor:"pointer",fontSize:"11px"},onclick:async()=>{await db.collection("urunler").doc(u.id).delete();bildirimGoster("🗑 Ürün silindi","#8B1A1A");}},"🗑")
+      )
+    )
+  );
+}
+
+function buildUrunDuzenle() {
+  if(!duzenleUrun)return h("div",{},"");
+  const u=duzenleUrun;
+
+  return h("div",{style:{padding:"16px"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}},
+      h("button",{style:{background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"18px"},onclick:()=>{ayarEkran="urunler";buildAyarlar();}},"←"),
+      h("span",{style:{fontSize:"14px",fontWeight:"bold"}},"✏️ Ürün Düzenle")
+    ),
+    // Emoji picker
+    h("div",{style:{display:"flex",flexWrap:"wrap",gap:"4px",background:S.kart,border:"1px solid "+S.border,borderRadius:"8px",padding:"8px",maxHeight:"110px",overflowY:"auto",marginBottom:"12px"}},
+      ...EMOJILER.map(e=>{
+        const btn=h("button",{class:"emoji-btn"+(u.emoji===e?" active":"")},e);
+        btn.addEventListener("click",()=>{duzenleUrun.emoji=e;buildAyarlar();});
+        return btn;
+      })
+    ),
+    h("div",{style:{marginBottom:"10px"}},
+      h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"4px"}},"Ürün Adı:"),
+      h("input",{class:"form-inp",type:"text",value:u.ad,oninput:function(){duzenleUrun.ad=this.value;}})
+    ),
+    h("div",{style:{marginBottom:"10px"}},
+      h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"4px"}},"Fiyat (₺):"),
+      h("input",{class:"form-inp",type:"number",value:u.fiyat,oninput:function(){duzenleUrun.fiyat=this.value;}})
+    ),
+    h("div",{style:{marginBottom:"14px"}},
+      h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"4px"}},"Kategori:"),
+      h("select",{style:{width:"100%",padding:"10px",background:S.kart,border:"1px solid "+S.border,borderRadius:"6px",color:S.metin,fontSize:"14px",outline:"none"},onchange:function(){duzenleUrun.kategori=this.value;}},
+        ...[...new Set(urunler.map(v=>v.kategori))].map(k=>h("option",{value:k,selected:k===u.kategori?true:undefined},k))
+      )
+    ),
+    h("div",{style:{display:"flex",gap:"8px"}},
+      h("button",{style:{flex:"1",padding:"12px",background:S.kart,color:S.soluk,border:"1px solid "+S.border,borderRadius:"8px",cursor:"pointer"},onclick:()=>{ayarEkran="urunler";buildAyarlar();}},"İPTAL"),
+      h("button",{style:{flex:"2",padding:"12px",background:"#1a4a8a",color:"#aaccff",border:"none",borderRadius:"8px",fontSize:"13px",fontWeight:"bold",cursor:"pointer"},onclick:async()=>{
+        await db.collection("urunler").doc(duzenleUrun.id).update({...duzenleUrun,fiyat:parseFloat(duzenleUrun.fiyat)});
+        bildirimGoster("✅ "+duzenleUrun.ad+" güncellendi!");
+        ayarEkran="urunler";buildAyarlar();
+      }},"💾 KAYDET")
+    )
+  );
+}
+
+function buildTopluFiyat() {
+  const katlar = ["Tümü",...new Set(urunler.map(u=>u.kategori))];
+  const filtreUrunler = urunler.filter(u=>topluKategori==="Tümü"||u.kategori===topluKategori);
+
+  async function topluGuncelle(tip) {
+    if(!topluOran)return;
+    const oran=parseFloat(topluOran);
+    const batch=db.batch();
+    filtreUrunler.forEach(u=>{
+      const yeniFiyat=tip==="artir"?u.fiyat*(1+oran/100):u.fiyat*(1-oran/100);
+      batch.update(db.collection("urunler").doc(u.id),{fiyat:Math.round(yeniFiyat)});
+    });
+    await batch.commit();
+    bildirimGoster("✅ Fiyatlar "+(tip==="artir"?"%"+oran+" artırıldı":"%"+oran+" indirildi")+"!");
+    topluOran="";buildAyarlar();
+  }
+
+  return h("div",{style:{padding:"16px"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"20px"}},
+      h("button",{style:{background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"18px"},onclick:()=>{ayarEkran="menu";buildAyarlar();}},"←"),
+      h("span",{style:{fontSize:"14px",fontWeight:"bold"}},"💹 Toplu Fiyat Güncelle")
+    ),
+    h("div",{style:{background:S.kart,border:"1px solid "+S.border,borderRadius:"10px",padding:"14px",marginBottom:"14px"}},
+      h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"8px"}},"Kategori:"),
+      h("div",{style:{display:"flex",flexWrap:"wrap",gap:"6px"}},
+        ...katlar.map(k=>{
+          const btn=h("button",{class:"kat-chip"+(topluKategori===k?" active":"")},k);
+          btn.addEventListener("click",()=>{topluKategori=k;buildAyarlar();});
+          return btn;
+        })
+      )
+    ),
+    h("div",{style:{marginBottom:"14px"}},
+      h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"6px"}},"Yüzde (%):"),
+      h("input",{class:"form-inp",type:"number",value:topluOran,placeholder:"örn: 10",style:{fontSize:"18px",fontWeight:"bold",textAlign:"center"},oninput:function(){topluOran=this.value;buildAyarlar();}})
+    ),
+    h("div",{style:{display:"flex",gap:"8px",marginBottom:"14px"}},
+      h("button",{style:{flex:"1",padding:"14px 0",background:"#1a4a1a",color:"#aaffaa",border:"1px solid #2a7a2a",borderRadius:"8px",fontSize:"13px",fontWeight:"bold",cursor:"pointer"},onclick:()=>topluGuncelle("artir")},"📈 %"+(topluOran||"?")+" ZAM"),
+      h("button",{style:{flex:"1",padding:"14px 0",background:"#3a1a1a",color:"#ffaaaa",border:"1px solid #7a2a2a",borderRadius:"8px",fontSize:"13px",fontWeight:"bold",cursor:"pointer"},onclick:()=>topluGuncelle("indir")},"📉 %"+(topluOran||"?")+" İNDİRİM")
+    ),
+    topluOran ? h("div",{style:{background:S.kart,border:"1px solid "+S.border,borderRadius:"8px",padding:"10px"}},
+      h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"6px"}},"Önizleme:"),
+      ...filtreUrunler.slice(0,5).map(u=>h("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"12px",padding:"2px 0",borderBottom:"1px solid #2a1a08"}},
+        h("span",{},u.ad),
+        h("span",{},u.fiyat+"₺ → ",h("span",{style:{color:S.altin}},Math.round(u.fiyat*(1+parseFloat(topluOran)/100))+"₺"))
+      ))
+    ) : null
+  );
+}
+
+function buildTekliFiyat() {
+  return h("div",{style:{padding:"16px"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}},
+      h("button",{style:{background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"18px"},onclick:()=>{ayarEkran="menu";buildAyarlar();}},"←"),
+      h("span",{style:{fontSize:"14px",fontWeight:"bold"}},"✏️ Tekli Fiyat Güncelle")
+    ),
+    h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"12px"}},"Değiştirmek istediğin ürünün fiyatını yaz ve ✓ ile kaydet."),
+    ...urunler.map(u=>{
+      const hasDuzenle = tekliDuzenle[u.id]!==undefined;
+      const inp = h("input",{type:"number",placeholder:u.fiyat+"",value:hasDuzenle?tekliDuzenle[u.id]:"",
+        style:{width:"72px",padding:"7px 8px",background:S.bg,border:"1px solid "+(hasDuzenle?S.turuncu:S.border),borderRadius:"6px",color:S.altin,fontSize:"13px",fontWeight:"bold",textAlign:"right",outline:"none"},
+        oninput:function(){tekliDuzenle[u.id]=this.value;buildAyarlar();}});
+      const kaydetBtn = hasDuzenle&&tekliDuzenle[u.id]!==""
+        ? h("button",{style:{background:"#1a5a1a",border:"1px solid #2a7a2a",borderRadius:"6px",color:"#aaffaa",padding:"7px 10px",cursor:"pointer",fontSize:"13px"},onclick:async()=>{
+            const yeniFiyat=parseFloat(tekliDuzenle[u.id]);
+            if(isNaN(yeniFiyat)||yeniFiyat<=0){bildirimGoster("Geçersiz fiyat!","#8B1A1A");return;}
+            await db.collection("urunler").doc(u.id).update({fiyat:yeniFiyat});
+            delete tekliDuzenle[u.id];
+            bildirimGoster("✅ "+u.ad+" → "+yeniFiyat+"₺");
+            buildAyarlar();
+          }},"✓")
+        : null;
+      return h("div",{style:{background:S.kart,border:"1px solid "+S.border,borderRadius:"8px",padding:"10px 12px",marginBottom:"6px",display:"flex",alignItems:"center",gap:"10px"}},
+        h("span",{style:{fontSize:"20px"}},u.emoji||"🌯"),
+        h("div",{style:{flex:"1"}},
+          h("div",{style:{fontSize:"12px",fontWeight:"bold"}},u.ad),
+          h("div",{style:{fontSize:"10px",color:S.soluk}},u.kategori+" · Mevcut: ",h("span",{style:{color:S.altin}},u.fiyat+"₺"))
+        ),
+        inp,
+        h("span",{style:{fontSize:"12px",color:S.soluk}},"₺"),
+        kaydetBtn
+      );
+    }),
+    h("button",{style:{width:"100%",marginTop:"10px",padding:"13px",background:"#1a4a8a",color:"#aaccff",border:"none",borderRadius:"8px",fontSize:"14px",fontWeight:"bold",cursor:"pointer"},onclick:async()=>{
+      const batch=db.batch();let sayac=0;
+      Object.entries(tekliDuzenle).forEach(([id,fiyat])=>{
+        if(fiyat&&!isNaN(parseFloat(fiyat))){
+          batch.update(db.collection("urunler").doc(id),{fiyat:parseFloat(fiyat)});sayac++;
+        }
+      });
+      await batch.commit();tekliDuzenle={};
+      bildirimGoster("✅ "+sayac+" ürün fiyatı güncellendi!");buildAyarlar();
+    }},"💾 TÜMÜNÜ KAYDET")
+  );
+}
+
+function buildSiralama() {
+  let _surukleIdx = null;
+  let _urunler = [...urunler];
+
+  function rebuildListe(container) {
+    container.innerHTML="";
+    _urunler.forEach((u,idx)=>{
+      const row = h("div",{class:"drag-item",draggable:"true",style:{background:_surukleIdx===idx?"#2a1a40":S.kart,border:"1px solid "+(_surukleIdx===idx?S.mor:S.border),borderRadius:"8px",padding:"10px 14px",marginBottom:"6px",display:"flex",alignItems:"center",gap:"12px",transition:"all 0.1s"}},
+        h("span",{style:{color:S.soluk,fontSize:"16px",cursor:"grab"}},"⠿"),
+        h("span",{style:{fontSize:"20px"}},u.emoji||"🌯"),
+        h("div",{style:{flex:"1"}},
+          h("div",{style:{fontSize:"12px",fontWeight:"bold"}},u.ad),
+          h("div",{style:{fontSize:"10px",color:S.soluk}},u.kategori+" · "+u.fiyat+"₺")
+        ),
+        h("span",{style:{color:S.soluk,fontSize:"11px"}},"#"+(idx+1))
+      );
+      row.addEventListener("dragstart",()=>{_surukleIdx=idx;});
+      row.addEventListener("dragover",e=>{
+        e.preventDefault();
+        if(_surukleIdx===null||_surukleIdx===idx)return;
+        const [alindi]=_urunler.splice(_surukleIdx,1);
+        _urunler.splice(idx,0,alindi);
+        _surukleIdx=idx;
+        rebuildListe(container);
+      });
+      row.addEventListener("dragend",()=>{_surukleIdx=null;rebuildListe(container);});
+      container.appendChild(row);
+    });
+  }
+
+  const liste = h("div",{id:"siralama-liste"});
+  rebuildListe(liste);
+
+  return h("div",{style:{padding:"16px"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"8px"}},
+      h("button",{style:{background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"18px"},onclick:()=>{ayarEkran="menu";buildAyarlar();}},"←"),
+      h("span",{style:{fontSize:"14px",fontWeight:"bold",flex:"1"}},"↕️ Ürün Sıralaması"),
+      h("button",{style:{background:"#1a5a1a",border:"1px solid #2a7a2a",borderRadius:"7px",color:"#aaffaa",padding:"8px 14px",cursor:"pointer",fontSize:"12px",fontWeight:"bold"},onclick:async()=>{
+        const batch=db.batch();
+        _urunler.forEach((u,i)=>batch.update(db.collection("urunler").doc(u.id),{sira:i}));
+        await batch.commit();bildirimGoster("✅ Sıralama kaydedildi!");
+        ayarEkran="menu";buildAyarlar();
+      }},"💾 KAYDET")
+    ),
+    h("div",{style:{fontSize:"11px",color:S.soluk,marginBottom:"12px"}},"Sürükle-bırak ile sıralamayı değiştir."),
+    liste
+  );
+}
+
+// ════════════════════════════════════════════════════
+// BAŞLANGAÇ
+// ════════════════════════════════════════════════════
+function yuklemeEkrani() {
+  document.getElementById("app").innerHTML="";
+  document.getElementById("app").appendChild(
+    h("div",{style:{minHeight:"100vh",background:S.bg,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:"10px"}},
+      h("div",{style:{fontSize:"48px"}},"🔥"),
+      h("div",{style:{fontSize:"16px",color:S.altin,letterSpacing:"3px"}},"BÜFE KASA"),
+      h("div",{style:{fontSize:"12px",color:S.soluk}},"Yükleniyor...")
+    )
+  );
+}
+
+function firebaseHataEkrani() {
+  document.getElementById("app").innerHTML="";
+  document.getElementById("app").appendChild(
+    h("div",{style:{minHeight:"100vh",background:S.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}},
+      h("div",{style:{maxWidth:"400px",textAlign:"center"}},
+        h("div",{style:{fontSize:"48px",marginBottom:"16px"}},"⚠️"),
+        h("div",{style:{fontSize:"16px",color:S.kirmizi,marginBottom:"12px"}},"Firebase Yüklenemedi"),
+        h("div",{style:{fontSize:"12px",color:S.soluk,lineHeight:"1.8"}},"firebase-app-compat.js, firebase-auth-compat.js, firebase-firestore-compat.js yüklendiğinden emin olun.")
+      )
+    )
+  );
+}
+
+yuklemeEkrani();
+
+let deneme=0;
+const bekle = setInterval(()=>{
+  deneme++;
+  if(initFirebase()){
+    clearInterval(bekle);
+    auth.onAuthStateChanged(async user=>{
+      if(user){
+        const snap=await db.collection("kullanicilar").doc(user.uid).get();
+        kullanici={uid:user.uid,email:user.email,ad:snap.data()?.ad||user.email};
+        renderMasalar();
+      } else {
+        renderGiris();
+      }
+    });
+  } else if(deneme>20){
+    clearInterval(bekle);
+    firebaseHataEkrani();
+  }
+},300);
+
+window.addEventListener("resize",()=>{
+  if(seciliMasa&&kasaEkran==="kasa") buildKasa();
+  else if(!seciliMasa&&kullanici) {/* masalar otomatik rebuild */}
+});
+</script>
+</body>
 </html>

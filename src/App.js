@@ -314,93 +314,124 @@ function MasalarEkrani({ kullanici, onCikis, onMasaSec }) {
       `}</style>
       <Bildirim bildirim={bildirim} />
 
-      {/* Header */}
-      <div style={{ background: "#8B1A1A", padding: isMobile ? "12px 14px" : "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "2px solid " + S.turuncu }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 24 }}>🔥</span>
-          <div>
-            <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: "bold", color: S.altin, letterSpacing: 2 }}>BÜFE KASA</div>
-            <div style={{ fontSize: 10, color: "#ffaa88" }}>Hoş geldin, {kullanici.ad}</div>
+      {/* Ana içerik */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", height: isMobile ? "100vh" : "100vh", overflow: "hidden" }}>
+        {/* Header — Sabit */}
+        <div style={{ background: "#8B1A1A", padding: isMobile ? "10px 12px" : "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "2px solid " + S.turuncu, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {isMobile && <button onClick={onGeri} style={{ background: "none", border: "none", color: "#ffaa88", cursor: "pointer", fontSize: 18 }}>←</button>}
+            <span style={{ fontSize: 20 }}>🔥</span>
+            <span style={{ fontSize: isMobile ? 15 : 17, fontWeight: "bold", color: S.altin, letterSpacing: 2 }}>{masa.ad.toUpperCase()}</span>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span style={{ fontSize: 10, color: "#ffaa88" }}>{new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</span>
+            {!isMobile && <button onClick={onGeri} style={{ background: "#5a1010", border: "1px solid #ff6b35", borderRadius: 6, color: S.altin, padding: "5px 10px", cursor: "pointer", fontSize: 12, fontFamily: "'Courier New', monospace" }}>← Masalar</button>}
+            <button onClick={() => { setEkran("ayarlar"); setAyarEkran("menu"); }} style={{ background: "#5a1010", border: "1px solid #ff6b35", borderRadius: 6, color: S.altin, padding: "5px 10px", cursor: "pointer", fontSize: 16 }}>⚙️</button>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => setMasaEkleAcik(true)} style={{ background: "#1a5a1a", border: "1px solid #2a7a2a", borderRadius: 7, color: "#aaffaa", padding: isMobile ? "7px 10px" : "8px 14px", cursor: "pointer", fontSize: isMobile ? 11 : 13, fontWeight: "bold", fontFamily: "'Courier New', monospace" }}>+ MASA</button>
-          <button onClick={onCikis} style={{ background: "#2a0808", border: "1px solid #5a1a1a", borderRadius: 7, color: "#ff8888", padding: isMobile ? "7px 10px" : "8px 14px", cursor: "pointer", fontSize: isMobile ? 11 : 13, fontFamily: "'Courier New', monospace" }}>⏏ ÇIKIŞ</button>
-        </div>
-      </div>
 
-      {/* Masa Ekle Modal */}
-      {masaEkleAcik && (
-        <div style={{ position: "fixed", inset: 0, background: "#000a", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: S.panel, border: "2px solid " + S.border, borderRadius: 12, padding: 24, width: 320, animation: "fadeIn 0.2s ease" }}>
-            <div style={{ fontSize: 16, fontWeight: "bold", marginBottom: 16 }}>➕ Yeni Masa</div>
-            <input value={yeniAd} onChange={e => setYeniAd(e.target.value)} placeholder="Masa adı..."
-              onKeyDown={e => e.key === "Enter" && masaEkle()}
-              style={{ width: "100%", padding: "11px 12px", background: S.kart, border: "1px solid " + S.border, borderRadius: 7, color: S.metin, fontSize: 14, boxSizing: "border-box", fontFamily: "'Courier New', monospace", outline: "none" }} />
-            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-              <button onClick={() => setMasaEkleAcik(false)} style={{ flex: 1, padding: "10px", background: S.kart, border: "1px solid " + S.border, borderRadius: 7, color: S.soluk, cursor: "pointer", fontFamily: "'Courier New', monospace" }}>İPTAL</button>
-              <button onClick={masaEkle} style={{ flex: 2, padding: "10px", background: "#1a5a1a", color: "#aaffaa", border: "none", borderRadius: 7, fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace" }}>✅ EKLE</button>
+        {/* Arama ve Kategori — Sabit */}
+        <div style={{ flexShrink: 0 }}>
+          <div style={{ padding: "8px 10px", background: "#130c04", borderBottom: "1px solid " + S.border }}>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <span style={{ position: "absolute", left: 10, fontSize: 14, color: S.soluk, pointerEvents: "none" }}>🔍</span>
+              <input ref={kasaAramaRef} type="text" value={kasaArama}
+                onChange={e => { setKasaArama(e.target.value); if (e.target.value) setAktifKategori("Tümü"); }}
+                placeholder="Ürün ara..."
+                style={{ width: "100%", padding: "8px 32px 8px 32px", background: "#1c1208", border: "1px solid " + (kasaArama ? S.turuncu : S.border), borderRadius: 8, color: S.metin, fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "'Courier New', monospace" }} />
+              {kasaArama && <button onClick={() => setKasaArama("")} style={{ position: "absolute", right: 8, background: "none", border: "none", color: S.soluk, cursor: "pointer", fontSize: 15 }}>✕</button>}
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Masalar Grid */}
-      <div style={{ padding: isMobile ? 12 : 24, display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: isMobile ? 10 : 16 }}>
-        {masalar.map(masa => {
-          const sep = masaSepetler[masa.id] || { toplam: 0, adet: 0 };
-          const dolu = sep.adet > 0;
-          return (
-            <div key={masa.id} className="masa-kart" style={{
-              background: dolu ? "#1a0a0a" : S.kart,
-              border: `2px solid ${dolu ? S.turuncu : S.border}`,
-              borderRadius: 12, padding: isMobile ? 12 : 18,
-              boxShadow: dolu ? "0 0 16px #FF6B3533" : "none",
-              animation: "fadeIn 0.3s ease",
-            }}>
-              {duzenleId === masa.id ? (
-                <div style={{ display: "flex", gap: 6 }}>
-                  <input value={duzenleAd} onChange={e => setDuzenleAd(e.target.value)}
-                    onKeyDown={e => { if (e.key === "Enter") masaGuncelle(masa.id); if (e.key === "Escape") setDuzenleId(null); }}
-                    autoFocus
-                    style={{ flex: 1, padding: "6px 8px", background: S.bg, border: "1px solid " + S.turuncu, borderRadius: 5, color: S.metin, fontSize: 12, fontFamily: "'Courier New', monospace", outline: "none" }} />
-                  <button onClick={() => masaGuncelle(masa.id)} style={{ background: "#1a5a1a", border: "none", borderRadius: 5, color: "#aaffaa", padding: "6px 8px", cursor: "pointer", fontSize: 12 }}>✓</button>
-                  <button onClick={() => setDuzenleId(null)} style={{ background: "#2a0a0a", border: "none", borderRadius: 5, color: "#ff8888", padding: "6px 8px", cursor: "pointer", fontSize: 12 }}>✕</button>
-                </div>
+          {!kasaArama.trim() && (
+            <div style={{ display: "flex", gap: 4, padding: "6px 8px", background: "#150e04", overflowX: "auto", borderBottom: "1px solid " + S.border }}>
+              {kategoriler.map(k => (
+                <button key={k} onClick={() => setAktifKategori(k)} style={{ padding: "5px 12px", fontSize: 11, fontWeight: "bold", whiteSpace: "nowrap", background: aktifKategori === k ? S.turuncu : S.kart, color: aktifKategori === k ? "#fff" : S.soluk, border: "1px solid " + (aktifKategori === k ? S.turuncu : S.border), borderRadius: 20, cursor: "pointer", fontFamily: "'Courier New', monospace" }}>{k}</button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Numpad — Sabit */}
+        {seciliUrun && (
+          <div style={{ background: "#1a0a0a", borderBottom: "2px solid " + S.turuncu, padding: "8px 12px", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 26 }}>{seciliUrun.emoji}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: "bold" }}>{seciliUrun.ad}</div>
+                <div style={{ fontSize: 11, color: S.soluk }}>{seciliUrun.fiyat}₺ × {adetInput || "?"} = <span style={{ color: S.altin }}>{adetInput ? parseInt(adetInput) * seciliUrun.fiyat : 0}₺</span></div>
+              </div>
+              <div style={{ fontSize: 26, fontWeight: "bold", color: S.altin }}>{adetInput || "–"}</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4 }}>
+              {["1","2","3","4","5","6","7","8","9","C","0","⌫"].map(t => (
+                <button key={t} onClick={() => adetTus(t)} style={{ padding: "10px 0", fontSize: 14, fontWeight: "bold", background: t === "C" ? "#4a0000" : t === "⌫" ? "#2a1500" : "#2a1a08", color: t === "C" ? "#ff8888" : t === "⌫" ? "#ffaa66" : S.metin, border: "1px solid " + S.border, borderRadius: 5, cursor: "pointer", fontFamily: "'Courier New', monospace" }}>{t}</button>
+              ))}
+            </div>
+            <button onClick={() => adetTus("✓")} style={{ width: "100%", marginTop: 6, padding: "11px", fontSize: 14, fontWeight: "bold", background: "#1a5a1a", color: "#aaffaa", border: "1px solid #2a8a2a", borderRadius: 6, cursor: "pointer", letterSpacing: 1, fontFamily: "'Courier New', monospace" }}>✓ SEPETE EKLE</button>
+          </div>
+        )}
+
+        {/* Ürün Grid — Kaydırılabilir */}
+        <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(5, 1fr)", gap: 6, alignContent: "start" }}>
+          {filtreliUrunler.map(urun => (
+            <button key={urun.id} className="urun-btn" onClick={() => urunSec(urun)} 
+              style={{ 
+                background: seciliUrun?.id === urun.id ? "#3a0a0a" : S.kart, 
+                border: "2px solid " + (seciliUrun?.id === urun.id ? S.turuncu : S.border), 
+                borderRadius: 8, padding: "8px 4px", textAlign: "center", color: S.metin, height: "fit-content"
+              }}>
+              {urun.resim ? (
+                  <img src={urun.resim} style={{ width: "100%", height: 50, objectFit: "cover", borderRadius: 4, marginBottom: 4 }} alt={urun.ad} />
               ) : (
-                <>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                    <button onClick={() => onMasaSec(masa)} style={{ background: "none", border: "none", color: S.metin, cursor: "pointer", textAlign: "left", padding: 0, fontFamily: "'Courier New', monospace", flex: 1 }}>
-                      <div style={{ fontSize: isMobile ? 13 : 16, fontWeight: "bold", marginBottom: 2 }}>{masa.ad}</div>
-                      {dolu ? (
-                        <div style={{ fontSize: 11, color: S.altin, fontWeight: "bold" }}>{sep.toplam}₺ · {sep.adet} kalem</div>
-                      ) : (
-                        <div style={{ fontSize: 10, color: S.soluk }}>Boş</div>
-                      )}
-                    </button>
-                    <div style={{ display: "flex", gap: 4, marginLeft: 6 }}>
-                      <button onClick={() => { setDuzenleId(masa.id); setDuzenleAd(masa.ad); }} style={{ background: "#1a1a3a", border: "1px solid #3a3a7a", borderRadius: 5, color: "#8888ff", padding: "4px 6px", cursor: "pointer", fontSize: 10 }}>✏️</button>
-                      <button onClick={() => masaSil(masa.id, masa.ad)} style={{ background: "#2a0a0a", border: "1px solid #5a1a1a", borderRadius: 5, color: S.kirmizi, padding: "4px 6px", cursor: "pointer", fontSize: 10 }}>🗑</button>
-                    </div>
-                  </div>
-                  <button onClick={() => onMasaSec(masa)} style={{
-                    width: "100%", padding: isMobile ? "8px" : "10px", borderRadius: 7, border: "none",
-                    background: dolu ? "#FF6B35" : "#2a1808",
-                    color: dolu ? "#fff" : S.soluk,
-                    fontWeight: "bold", cursor: "pointer", fontSize: isMobile ? 11 : 13,
-                    fontFamily: "'Courier New', monospace",
-                  }}>
-                    {dolu ? "👁 GÖRÜNTÜLE" : "🍽️ AÇ"}
-                  </button>
-                </>
+                  <div style={{ fontSize: 26, marginBottom: 2 }}>{urun.emoji}</div>
               )}
-            </div>
-          );
-        })}
+              <div style={{ fontSize: 10, fontWeight: "bold", lineHeight: 1.2 }}>{urun.ad}</div>
+              <div style={{ fontSize: 11, color: S.altin }}>{urun.fiyat}₺</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Mobil Alt Bar — Sabit */}
+        {isMobile && (
+          <div style={{ background: "#0d0800", borderTop: "2px solid " + S.border, padding: "10px 12px", flexShrink: 0 }}>
+            {sepet.length > 0 && !odemeGosterge && (
+              <div style={{ maxHeight: 110, overflowY: "auto", marginBottom: 8 }}>
+                {sepet.map(item => (
+                  <div key={item._docId} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0", borderBottom: "1px solid #2a1a08" }}>
+                    <div style={{ flex: 1, fontSize: 11 }}>{item.ad} <span style={{ color: S.soluk }}>x{item.adet}</span></div>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button onClick={() => adetDegistir(item, -1)} style={{ background: "#2a0a0a", border: "none", color: S.kirmizi, width: 22, height: 22, borderRadius: 4 }}>−</button>
+                      <button onClick={() => adetDegistir(item, 1)} style={{ background: "#0a2a0a", border: "none", color: S.yesil, width: 22, height: 22, borderRadius: 4 }}>+</button>
+                    </div>
+                    <div style={{ fontSize: 11, color: S.altin, minWidth: 40, textAlign: "right" }}>{item.adet * item.fiyat}₺</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {!odemeGosterge ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 9, color: S.soluk }}>TOPLAM</div>
+                  <div style={{ fontSize: 22, fontWeight: "bold", color: S.altin }}>{toplam}₺</div>
+                </div>
+                <button onClick={() => fisYazdir(masa, sepet, toplam, kullanici)} style={{ padding: "10px", background: "#1a1a3a", color: "#8888ff", border: "1px solid #3a3a7a", borderRadius: 6 }}>🖨️</button>
+                <button onClick={() => sepet.length > 0 && setOdemeGosterge(true)} style={{ padding: "10px 18px", background: "#1a5a1a", color: "#aaffaa", borderRadius: 6, fontWeight: "bold" }}>💳 ÖDEME</button>
+              </div>
+            ) : (
+              <div>
+                <input type="number" value={alinan} onChange={e => setAlinan(e.target.value)} placeholder="Alınan..."
+                  style={{ width: "100%", padding: "10px", background: "#0d0800", border: "1px solid " + S.border, borderRadius: 6, color: S.altin, textAlign: "right", outline: "none" }} />
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <button onClick={() => setOdemeGosterge(false)} style={{ flex: 1, padding: "10px", background: S.kart, color: S.soluk, borderRadius: 6 }}>GERİ</button>
+                  <button onClick={tahsilEt} disabled={ustu < 0 || !alinan} style={{ flex: 2, padding: "10px", background: "#1a5a1a", color: "#aaffaa", borderRadius: 6, fontWeight: "bold" }}>✓ TAHSİL</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </div>
-  );
-}
 
 // ═══════════════════════════════════════════════════════════════
 //  FİŞ YAZDIR

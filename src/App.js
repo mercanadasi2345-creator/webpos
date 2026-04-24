@@ -537,7 +537,22 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
       bildirimGoster(`✓ ${seciliUrun.ad} x${adet} eklendi`);
       setSeciliUrun(null); setAdetInput(""); return;
     }
+
+     else {
+  await db.collection("masalar").doc(masa.id).collection("sepet").add({
+    id: seciliUrun.id, 
+    ad: seciliUrun.ad, 
+    fiyat: seciliUrun.fiyat,
+    emoji: seciliUrun.emoji, 
+    resim: seciliUrun.resim || null, // RESİM URL'SİNİ BURAYA EKLEDİK
+    adet, 
+    ekleyen: kullanici.ad, 
+    eklemeZamani: new Date(),
+  });
+}
     setAdetInput(p => (p + tus).replace(/^0+(\d)/, "$1"));
+
+    
   }
 
   async function sepettenCikar(docId) {
@@ -1066,11 +1081,16 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
             style={{ width: "100%", padding: "8px 12px", background: S.kart, border: "1px solid " + S.border, borderRadius: 8, color: S.metin, fontSize: 13, boxSizing: "border-box", marginBottom: 10, outline: "none", fontFamily: "'Courier New', monospace" }} />
           {urunler.filter(u => u.ad.toLowerCase().includes(aramaMetni.toLowerCase())).map(u => (
             <div key={u.id} style={{ background: S.kart, border: "1px solid " + (u.aktif ? S.border : "#3a2a1a"), borderRadius: 8, padding: "10px 12px", marginBottom: 6, display: "flex", alignItems: "center", gap: 10, opacity: u.aktif ? 1 : 0.5 }}>
-              <span style={{ fontSize: 22 }}>{u.emoji}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: "bold" }}>{u.ad}</div>
-                <div style={{ fontSize: 10, color: S.soluk }}>{u.kategori} · <span style={{ color: S.altin }}>{u.fiyat}₺</span></div>
-              </div>
+              {/* EMOJI YERİNE RESİM KONTROLÜ EKLE */}
+    {u.resim ? (
+      <img src={u.resim} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover" }} alt={u.ad} />
+    ) : (
+      <span style={{ fontSize: 22 }}>{u.emoji}</span>
+    )}
+    <div style={{ flex: 1 }}>
+      <div style={{ fontSize: 12, fontWeight: "bold" }}>{u.ad}</div>
+      <div style={{ fontSize: 10, color: S.soluk }}>{u.kategori} · <span style={{ color: S.altin }}>{u.fiyat}₺</span></div>
+    </div>
               <button onClick={() => urunToggle(u)} style={{ background: u.aktif ? "#0a2a0a" : "#2a1a08", border: "1px solid " + (u.aktif ? "#2a7a2a" : S.border), borderRadius: 5, color: u.aktif ? S.yesil : S.soluk, padding: "4px 8px", cursor: "pointer", fontSize: 11 }}>{u.aktif ? "✓" : "✗"}</button>
               <button onClick={() => { setDuzenleUrun({ ...u }); setAyarEkran("urunDuzenle"); }} style={{ background: "#1a1a3a", border: "1px solid #3a3a7a", borderRadius: 5, color: "#8888ff", padding: "4px 7px", cursor: "pointer", fontSize: 11 }}>✏️</button>
               <button onClick={() => urunSil(u.id)} style={{ background: "#2a0a0a", border: "1px solid #5a1a1a", borderRadius: 5, color: S.kirmizi, padding: "4px 7px", cursor: "pointer", fontSize: 11 }}>🗑</button>

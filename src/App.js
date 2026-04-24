@@ -27,20 +27,12 @@ let db = null;
 let auth = null;
 function initFirebase() {
   try {
-    // window.firebase'in varlığını kontrol et
-    const fb = window.firebase;
-    if (!fb) {
-      console.warn("Firebase henüz pencereye (window) bağlanmadı...");
-      return false;
+    if (!window.firebase) return false;
+    if (!window.firebase.apps?.length) {
+      window.firebase.initializeApp(FIREBASE_CONFIG);
     }
-
-    if (!fb.apps?.length) {
-      fb.initializeApp(FIREBASE_CONFIG);
-      console.log("Firebase başarıyla başlatıldı.");
-    }
-    
-    db = fb.firestore();
-    auth = fb.auth();
+    db = window.firebase.firestore();
+    auth = window.firebase.auth();
     return true;
   } catch (e) {
     console.error("Firebase init hatası:", e);
@@ -650,6 +642,7 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
     bildirimGoster("✅ Sıralama kaydedildi!");
   }
 
+    const newLocal = "100%";
   // ── KASA EKRANI ─────────────────────────────────────────────
   if (ekran === "kasa") return (
     <div style={{
@@ -794,10 +787,19 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
             </div>
           )}
           {filtreliUrunler.map(urun => (
-            <button key={urun.id} className="urun-btn" onClick={() => urunSec(urun)} style={{ background: seciliUrun?.id === urun.id ? "#3a0a0a" : S.kart, border: "2px solid " + (seciliUrun?.id === urun.id ? S.turuncu : S.border), borderRadius: 8, cursor: "pointer", padding: "8px 4px", textAlign: "center", color: S.metin, boxShadow: seciliUrun?.id === urun.id ? "0 0 14px #FF6B3566" : "none" }}>
-              <div style={{ fontSize: 26, marginBottom: 2 }}>{urun.emoji}</div>
-              <div style={{ fontSize: 10, fontWeight: "bold", lineHeight: 1.2, marginBottom: 3 }}>{urun.ad}</div>
-              <div style={{ fontSize: 12, color: S.altin, fontWeight: "bold" }}>{urun.fiyat}₺</div>
+            <button key={urun.id} className="urun-btn" onClick={() => urunSec(urun)} 
+            style={{ 
+                background: seciliUrun?.id === urun.id ? "#3a0a0a" : S.kart, 
+                border: "2px solid " + (seciliUrun?.id === urun.id ? S.turuncu : S.border), 
+                borderRadius: 8, padding: "4px", textAlign: "center", color: S.metin, overflow: "hidden" 
+            }}>
+            {urun.resim ? (
+                <img src={urun.resim} style={{ width: newLocal, height: 50, objectFit: "cover", borderRadius: 4, marginBottom: 4 }} alt={urun.ad} />
+            ) : (
+                <div style={{ fontSize: 26, marginBottom: 2 }}>{urun.emoji}</div>
+            )}
+            <div style={{ fontSize: 10, fontWeight: "bold", lineHeight: 1.2 }}>{urun.ad}</div>
+            <div style={{ fontSize: 11, color: S.altin }}>{urun.fiyat}₺</div>
             </button>
           ))}
         </div>
@@ -911,45 +913,136 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
         </div>
       )}
 
-      {/* Ürün Ekle */}
-      {ayarEkran === "urunEkle" && (
-        <div style={{ padding: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <button onClick={() => setAyarEkran("menu")} style={{ background: "none", border: "none", color: S.soluk, cursor: "pointer", fontSize: 18 }}>←</button>
-            <span style={{ fontSize: 14, fontWeight: "bold" }}>➕ Yeni Ürün Ekle</span>
-          </div>
-          <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <button onClick={() => setEmojiSecici(!emojiSecici)} style={{ width: 70, height: 70, borderRadius: 12, border: "2px dashed " + S.border, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px", cursor: "pointer", background: S.kart, fontSize: 36 }}>{yeniUrun.emoji}</button>
-            {emojiSecici && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, background: S.panel, border: "1px solid " + S.border, borderRadius: 8, padding: 8, maxHeight: 120, overflowY: "auto" }}>
-                {EMOJILER.map(e => (
-                  <button key={e} onClick={() => { setYeniUrun(p => ({ ...p, emoji: e })); setEmojiSecici(false); }} style={{ fontSize: 22, background: "none", border: "none", cursor: "pointer", padding: 4 }}>{e}</button>
-                ))}
-              </div>
-            )}
-          </div>
-          {[{ label: "Ürün Adı *", key: "ad", type: "text" }, { label: "Fiyat (₺) *", key: "fiyat", type: "number" }].map(f => (
-            <div key={f.key} style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 11, color: S.soluk, marginBottom: 4 }}>{f.label}</div>
-              <input type={f.type} value={yeniUrun[f.key]} onChange={e => setYeniUrun(p => ({ ...p, [f.key]: e.target.value }))}
-                style={{ width: "100%", padding: "10px 12px", background: S.kart, border: "1px solid " + S.border, borderRadius: 6, color: S.metin, fontSize: 14, boxSizing: "border-box", outline: "none", fontFamily: "'Courier New', monospace" }} />
-            </div>
-          ))}
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: S.soluk, marginBottom: 4 }}>Kategori:</div>
-            <select value={yeniUrun.kategori} onChange={e => setYeniUrun(p => ({ ...p, kategori: e.target.value }))}
-              style={{ width: "100%", padding: "10px", background: S.kart, border: "1px solid " + S.border, borderRadius: 6, color: S.metin, fontSize: 14, fontFamily: "'Courier New', monospace" }}>
-              {[...new Set(urunler.map(u => u.kategori))].map(k => <option key={k}>{k}</option>)}
-              <option value="__yeni__">+ Yeni Kategori</option>
-            </select>
-            {yeniUrun.kategori === "__yeni__" && (
-              <input type="text" placeholder="Yeni kategori adı..." onChange={e => setYeniUrun(p => ({ ...p, kategori: e.target.value }))}
-                style={{ width: "100%", marginTop: 6, padding: "10px 12px", background: S.kart, border: "1px solid " + S.turuncu, borderRadius: 6, color: S.metin, fontSize: 14, boxSizing: "border-box", outline: "none", fontFamily: "'Courier New', monospace" }} />
-            )}
-          </div>
-          <button onClick={urunEkle} style={{ width: "100%", padding: "13px", background: "#1a5a1a", color: "#aaffaa", border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace" }}>✅ ÜRÜNÜ EKLE</button>
+     {/* Ürün Ekle — Cloudinary Destekli */}
+{ayarEkran === "urunEkle" && (
+  <div style={{ padding: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+      <button onClick={() => setAyarEkran("menu")} style={{ background: "none", border: "none", color: S.soluk, cursor: "pointer", fontSize: 20 }}>←</button>
+      <span style={{ fontSize: 14, fontWeight: "bold" }}>➕ Yeni Ürün Ekle</span>
+    </div>
+
+    {/* Resim / Emoji Önizleme Alanı */}
+    <div style={{ textAlign: "center", marginBottom: 16 }}>
+      <div style={{ position: "relative", width: 90, height: 90, margin: "0 auto" }}>
+        <div 
+          onClick={() => !yeniUrun.resim && setEmojiSecici(!emojiSecici)}
+          style={{ 
+            width: "100%", height: "100%", borderRadius: 16, 
+            border: "2px dashed " + (yeniUrun.resim ? S.yesil : S.border), 
+            display: "flex", alignItems: "center", justifyContent: "center", 
+            background: S.kart, overflow: "hidden", cursor: "pointer" 
+          }}
+        >
+          {yeniUrun.resim ? (
+            <img src={yeniUrun.resim} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Önizleme" />
+          ) : (
+            <span style={{ fontSize: 40 }}>{yeniUrun.emoji}</span>
+          )}
         </div>
+        
+        {/* Resim Yükleme İkonu (Dosya Seçici) */}
+        <label style={{ 
+          position: "absolute", bottom: -5, right: -5, background: S.turuncu, 
+          width: 30, height: 30, borderRadius: "50%", display: "flex", 
+          alignItems: "center", justifyContent: "center", cursor: "pointer", border: "2px solid " + S.bg 
+        }}>
+          <span style={{ fontSize: 16 }}>📷</span>
+          <input 
+            type="file" 
+            accept="image/*" 
+            style={{ display: "none" }} 
+            onChange={async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              
+              // Yükleniyor efekti için geçici bildirim
+              bildirimGoster("⌛ Resim yükleniyor...", S.mavi);
+              
+              const formData = new FormData();
+              formData.append("file", file);
+              formData.append("upload_preset", "OLIMPIYAT_PRESET"); // Cloudinary'den aldığın Preset adı
+              
+              try {
+                const res = await fetch("https://api.cloudinary.com/v1_1/CLOUD_ADIN/image/upload", {
+                  method: "POST",
+                  body: formData
+                });
+                const data = await res.json();
+                if (data.secure_url) {
+                  setYeniUrun(p => ({ ...p, resim: data.secure_url }));
+                  bildirimGoster("✅ Resim hazır!", S.yesil);
+                }
+              } catch (err) {
+                bildirimGoster("❌ Yükleme başarısız!", S.kirmizi);
+              }
+            }} 
+          />
+        </label>
+        
+        {/* Resmi Kaldır Butonu */}
+        {yeniUrun.resim && (
+          <button 
+            onClick={() => setYeniUrun(p => ({ ...p, resim: null }))}
+            style={{ position: "absolute", top: -5, right: -5, background: S.kirmizi, border: "none", borderRadius: "50%", width: 20, height: 20, color: "#fff", fontSize: 10, cursor: "pointer" }}
+          >✕</button>
+        )}
+      </div>
+      <div style={{ fontSize: 10, color: S.soluk, marginTop: 8 }}>{yeniUrun.resim ? "Resim yüklendi" : "Emoji seç veya resim yükle"}</div>
+    </div>
+
+    {/* Emoji Seçici Panel */}
+    {emojiSecici && !yeniUrun.resim && (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, background: S.panel, border: "1px solid " + S.border, borderRadius: 10, padding: 10, marginBottom: 16, maxHeight: 120, overflowY: "auto" }}>
+        {EMOJILER.map(e => (
+          <button key={e} onClick={() => { setYeniUrun(p => ({ ...p, emoji: e })); setEmojiSecici(false); }} style={{ fontSize: 24, background: "none", border: "none", cursor: "pointer", padding: 4 }}>{e}</button>
+        ))}
+      </div>
+    )}
+
+    {/* Giriş Alanları */}
+    {[{ label: "Ürün Adı *", key: "ad", type: "text", ph: "Örn: Arnavut Ciğeri" }, { label: "Fiyat (₺) *", key: "fiyat", type: "number", ph: "0.00" }].map(f => (
+      <div key={f.key} style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 11, color: S.soluk, marginBottom: 5 }}>{f.label}</div>
+        <input 
+          type={f.type} 
+          placeholder={f.ph}
+          value={yeniUrun[f.key]} 
+          onChange={e => setYeniUrun(p => ({ ...p, [f.key]: e.target.value }))}
+          style={{ width: "100%", padding: "12px", background: S.kart, border: "1px solid " + S.border, borderRadius: 8, color: S.metin, fontSize: 14, boxSizing: "border-box", outline: "none", fontFamily: "'Courier New', monospace" }} 
+        />
+      </div>
+    ))}
+
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 11, color: S.soluk, marginBottom: 5 }}>Kategori:</div>
+      <select 
+        value={yeniUrun.kategori} 
+        onChange={e => setYeniUrun(p => ({ ...p, kategori: e.target.value }))}
+        style={{ width: "100%", padding: "12px", background: S.kart, border: "1px solid " + S.border, borderRadius: 8, color: S.metin, fontSize: 14, fontFamily: "'Courier New', monospace", outline: "none" }}
+      >
+        {[...new Set(urunler.map(u => u.kategori))].map(k => <option key={k} value={k}>{k}</option>)}
+        <option value="__yeni__">+ Yeni Kategori Oluştur</option>
+      </select>
+      
+      {yeniUrun.kategori === "__yeni__" && (
+        <input 
+          type="text" 
+          autoFocus
+          placeholder="Kategori adını girin..." 
+          onChange={e => setYeniUrun(p => ({ ...p, kategori: e.target.value }))}
+          style={{ width: "100%", marginTop: 8, padding: "12px", background: S.kart, border: "1px solid " + S.turuncu, borderRadius: 8, color: S.metin, fontSize: 14, boxSizing: "border-box", outline: "none", fontFamily: "'Courier New', monospace" }} 
+        />
       )}
+    </div>
+
+    <button 
+      onClick={urunEkle} 
+      style={{ width: "100%", padding: "15px", background: "#1a5a1a", color: "#aaffaa", border: "1px solid #2a7a2a", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 1 }}
+    >
+      ✅ ÜRÜNÜ KAYDET
+    </button>
+  </div>
+)}
 
       {/* Ürün Listesi */}
       {ayarEkran === "urunler" && (

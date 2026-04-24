@@ -688,7 +688,11 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
             {sepet.length === 0 && <div style={{ color: S.soluk, fontSize: 12, textAlign: "center", marginTop: 20 }}>Sepet boş</div>}
             {sepet.map(item => (
               <div key={item._docId} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 0", borderBottom: "1px solid #2a1a08" }}>
-                <span style={{ fontSize: 14 }}>{item.emoji}</span>
+                {item.resim ? (
+      <img src={item.resim} style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} alt={item.ad} />
+    ) : (
+      <span style={{ fontSize: 14 }}>{item.emoji}</span>
+    )}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 11, fontWeight: "bold" }}>{item.ad}</div>
                   <div style={{ fontSize: 9, color: S.soluk }}>{item.ekleyen}</div>

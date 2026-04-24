@@ -721,110 +721,106 @@ function KasaEkrani({ masa, kullanici, onGeri }) {
         </div>
       )}
 
-      {/* Ana içerik */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        {/* Header */}
-        <div style={{ background: "#8B1A1A", padding: isMobile ? "10px 12px" : "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "2px solid " + S.turuncu, flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {isMobile && <button onClick={onGeri} style={{ background: "none", border: "none", color: "#ffaa88", cursor: "pointer", fontSize: 18 }}>←</button>}
-            <span style={{ fontSize: 20 }}>🔥</span>
-            <span style={{ fontSize: isMobile ? 15 : 17, fontWeight: "bold", color: S.altin, letterSpacing: 2 }}>{masa.ad.toUpperCase()}</span>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span style={{ fontSize: 10, color: "#ffaa88" }}>{new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</span>
-            {!isMobile && <button onClick={onGeri} style={{ background: "#5a1010", border: "1px solid #ff6b35", borderRadius: 6, color: S.altin, padding: "5px 10px", cursor: "pointer", fontSize: 12, fontFamily: "'Courier New', monospace" }}>← Masalar</button>}
-            <button onClick={() => { setEkran("ayarlar"); setAyarEkran("menu"); }} style={{ background: "#5a1010", border: "1px solid #ff6b35", borderRadius: 6, color: S.altin, padding: "5px 10px", cursor: "pointer", fontSize: 16 }}>⚙️</button>
-          </div>
+     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: isMobile ? "auto" : "100vh", overflow: "hidden" }}>
+  {/* Header — Sabit */}
+  <div style={{ background: "#8B1A1A", padding: isMobile ? "10px 12px" : "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "2px solid " + S.turuncu, flexShrink: 0 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      {isMobile && <button onClick={onGeri} style={{ background: "none", border: "none", color: "#ffaa88", cursor: "pointer", fontSize: 18 }}>←</button>}
+      <span style={{ fontSize: 20 }}>🔥</span>
+      <span style={{ fontSize: isMobile ? 15 : 17, fontWeight: "bold", color: S.altin, letterSpacing: 2 }}>{masa.ad.toUpperCase()}</span>
+    </div>
+    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <span style={{ fontSize: 10, color: "#ffaa88" }}>{new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</span>
+      {!isMobile && <button onClick={onGeri} style={{ background: "#5a1010", border: "1px solid #ff6b35", borderRadius: 6, color: S.altin, padding: "5px 10px", cursor: "pointer", fontSize: 12, fontFamily: "'Courier New', monospace" }}>← Masalar</button>}
+      <button onClick={() => { setEkran("ayarlar"); setAyarEkran("menu"); }} style={{ background: "#5a1010", border: "1px solid #ff6b35", borderRadius: 6, color: S.altin, padding: "5px 10px", cursor: "pointer", fontSize: 16 }}>⚙️</button>
+    </div>
+  </div>
+
+  {/* Arama ve Kategori — Sabit */}
+  <div style={{ flexShrink: 0 }}>
+    <div style={{ padding: "8px 10px", background: "#130c04", borderBottom: "1px solid " + S.border }}>
+      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+        <span style={{ position: "absolute", left: 10, fontSize: 14, color: S.soluk, pointerEvents: "none" }}>🔍</span>
+        <input ref={kasaAramaRef} type="text" value={kasaArama}
+          onChange={e => { setKasaArama(e.target.value); if (e.target.value) setAktifKategori("Tümü"); }}
+          placeholder="Ürün ara..."
+          style={{ width: "100%", padding: "8px 32px 8px 32px", background: "#1c1208", border: "1px solid " + (kasaArama ? S.turuncu : S.border), borderRadius: 8, color: S.metin, fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "'Courier New', monospace" }} />
+        {kasaArama && <button onClick={() => setKasaArama("")} style={{ position: "absolute", right: 8, background: "none", border: "none", color: S.soluk, cursor: "pointer", fontSize: 15 }}>✕</button>}
+      </div>
+    </div>
+
+    {!kasaArama.trim() && (
+      <div style={{ display: "flex", gap: 4, padding: "6px 8px", background: "#150e04", overflowX: "auto", borderBottom: "1px solid " + S.border }}>
+        {kategoriler.map(k => (
+          <button key={k} onClick={() => setAktifKategori(k)} style={{ padding: "5px 12px", fontSize: 11, fontWeight: "bold", whiteSpace: "nowrap", background: aktifKategori === k ? S.turuncu : S.kart, color: aktifKategori === k ? "#fff" : S.soluk, border: "1px solid " + (aktifKategori === k ? S.turuncu : S.border), borderRadius: 20, cursor: "pointer", fontFamily: "'Courier New', monospace" }}>{k}</button>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* Numpad — Sabit */}
+  {seciliUrun && (
+    <div style={{ background: "#1a0a0a", borderBottom: "2px solid " + S.turuncu, padding: "8px 12px", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span style={{ fontSize: 26 }}>{seciliUrun.emoji}</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 12, fontWeight: "bold" }}>{seciliUrun.ad}</div>
+          <div style={{ fontSize: 11, color: S.soluk }}>{seciliUrun.fiyat}₺ × {adetInput || "?"} = <span style={{ color: S.altin }}>{adetInput ? parseInt(adetInput) * seciliUrun.fiyat : 0}₺</span></div>
         </div>
+        <div style={{ fontSize: 26, fontWeight: "bold", color: S.altin }}>{adetInput || "–"}</div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4 }}>
+        {["1","2","3","4","5","6","7","8","9","C","0","⌫"].map(t => (
+          <button key={t} onClick={() => adetTus(t)} style={{ padding: "10px 0", fontSize: 14, fontWeight: "bold", background: t === "C" ? "#4a0000" : t === "⌫" ? "#2a1500" : "#2a1a08", color: t === "C" ? "#ff8888" : t === "⌫" ? "#ffaa66" : S.metin, border: "1px solid " + S.border, borderRadius: 5, cursor: "pointer", fontFamily: "'Courier New', monospace" }}>{t}</button>
+        ))}
+      </div>
+      <button onClick={() => adetTus("✓")} style={{ width: "100%", marginTop: 6, padding: "11px", fontSize: 14, fontWeight: "bold", background: "#1a5a1a", color: "#aaffaa", border: "1px solid #2a8a2a", borderRadius: 6, cursor: "pointer", letterSpacing: 1, fontFamily: "'Courier New', monospace" }}>✓ SEPETE EKLE</button>
+    </div>
+  )}
 
-        {/* Arama */}
-        <div style={{ padding: "8px 10px", background: "#130c04", borderBottom: "1px solid " + S.border, flexShrink: 0 }}>
-          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-            <span style={{ position: "absolute", left: 10, fontSize: 14, color: S.soluk, pointerEvents: "none" }}>🔍</span>
-            <input ref={kasaAramaRef} type="text" value={kasaArama}
-              onChange={e => { setKasaArama(e.target.value); if (e.target.value) setAktifKategori("Tümü"); }}
-              placeholder="Ürün ara..."
-              style={{ width: "100%", padding: "8px 32px 8px 32px", background: "#1c1208", border: "1px solid " + (kasaArama ? S.turuncu : S.border), borderRadius: 8, color: S.metin, fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "'Courier New', monospace" }} />
-            {kasaArama && <button onClick={() => setKasaArama("")} style={{ position: "absolute", right: 8, background: "none", border: "none", color: S.soluk, cursor: "pointer", fontSize: 15 }}>✕</button>}
-          </div>
-        </div>
-
-        {/* Kategori Tabs */}
-        {!kasaArama.trim() && (
-          <div style={{ display: "flex", gap: 4, padding: "6px 8px", background: "#150e04", overflowX: "auto", borderBottom: "1px solid " + S.border, flexShrink: 0 }}>
-            {kategoriler.map(k => (
-              <button key={k} onClick={() => setAktifKategori(k)} style={{ padding: "5px 12px", fontSize: 11, fontWeight: "bold", whiteSpace: "nowrap", background: aktifKategori === k ? S.turuncu : S.kart, color: aktifKategori === k ? "#fff" : S.soluk, border: "1px solid " + (aktifKategori === k ? S.turuncu : S.border), borderRadius: 20, cursor: "pointer", fontFamily: "'Courier New', monospace" }}>{k}</button>
-            ))}
-          </div>
+  {/* Ürün Grid — KAYDIRILABİLİR ALAN */}
+  <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(5, 1fr)", gap: 6, alignContent: "start" }}>
+    {filtreliUrunler.length === 0 && kasaArama.trim() && (
+      <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "32px 0", color: S.soluk }}>
+        <div style={{ fontSize: 36, marginBottom: 8 }}>🔍</div>
+        <div style={{ fontSize: 13 }}>"{kasaArama}" bulunamadı</div>
+      </div>
+    )}
+    {filtreliUrunler.map(urun => (
+      <button key={urun.id} className="urun-btn" onClick={() => urunSec(urun)} 
+        style={{ 
+          background: seciliUrun?.id === urun.id ? "#3a0a0a" : S.kart, 
+          border: "2px solid " + (seciliUrun?.id === urun.id ? S.turuncu : S.border), 
+          borderRadius: 8, padding: "8px 4px", textAlign: "center", color: S.metin, height: "fit-content"
+        }}>
+        {urun.resim ? (
+            <img src={urun.resim} style={{ width: "100%", height: 50, objectFit: "cover", borderRadius: 4, marginBottom: 4 }} alt={urun.ad} />
+        ) : (
+            <div style={{ fontSize: 26, marginBottom: 2 }}>{urun.emoji}</div>
         )}
+        <div style={{ fontSize: 10, fontWeight: "bold", lineHeight: 1.2 }}>{urun.ad}</div>
+        <div style={{ fontSize: 11, color: S.altin }}>{urun.fiyat}₺</div>
+      </button>
+    ))}
+  </div>
 
-        {/* Numpad (seçili ürün varsa) */}
-        {seciliUrun && (
-          <div style={{ background: "#1a0a0a", borderBottom: "2px solid " + S.turuncu, padding: "8px 12px", flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 26 }}>{seciliUrun.emoji}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: "bold" }}>{seciliUrun.ad}</div>
-                <div style={{ fontSize: 11, color: S.soluk }}>{seciliUrun.fiyat}₺ × {adetInput || "?"} = <span style={{ color: S.altin }}>{adetInput ? parseInt(adetInput) * seciliUrun.fiyat : 0}₺</span></div>
-              </div>
-              <div style={{ fontSize: 26, fontWeight: "bold", color: S.altin }}>{adetInput || "–"}</div>
+  {/* Mobil Alt Sepet — Sabit */}
+  {isMobile && (
+    <div style={{ background: "#0d0800", borderTop: "2px solid " + S.border, padding: "10px 12px", flexShrink: 0 }}>
+      {sepet.length > 0 && !odemeGosterge && (
+        <div style={{ maxHeight: 110, overflowY: "auto", marginBottom: 8, borderBottom: "1px solid #2a1a08" }}>
+          {sepet.map(item => (
+            <div key={item._docId} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0", borderBottom: "1px solid #2a1a08" }}>
+              <span style={{ fontSize: 13 }}>{item.emoji}</span>
+              <div style={{ flex: 1 }}><span style={{ fontSize: 11 }}>{item.ad}</span></div>
+              <button onClick={() => adetDegistir(item, -1)} style={{ background: "#2a0a0a", border: "none", color: S.kirmizi, width: 20, height: 20, borderRadius: 4 }}>−</button>
+              <span style={{ fontSize: 11, color: S.altin, minWidth: 14, textAlign: "center" }}>{item.adet}</span>
+              <button onClick={() => adetDegistir(item, 1)} style={{ background: "#0a2a0a", border: "none", color: S.yesil, width: 20, height: 20, borderRadius: 4 }}>+</button>
+              <span style={{ fontSize: 11, color: S.altin, minWidth: 42, textAlign: "right" }}>{item.adet * item.fiyat}₺</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4 }}>
-              {["1","2","3","4","5","6","7","8","9","C","0","⌫"].map(t => (
-                <button key={t} onClick={() => adetTus(t)} style={{ padding: "10px 0", fontSize: 14, fontWeight: "bold", background: t === "C" ? "#4a0000" : t === "⌫" ? "#2a1500" : "#2a1a08", color: t === "C" ? "#ff8888" : t === "⌫" ? "#ffaa66" : S.metin, border: "1px solid " + S.border, borderRadius: 5, cursor: "pointer", fontFamily: "'Courier New', monospace" }}>{t}</button>
-              ))}
-            </div>
-            <button onClick={() => adetTus("✓")} style={{ width: "100%", marginTop: 6, padding: "11px", fontSize: 14, fontWeight: "bold", background: "#1a5a1a", color: "#aaffaa", border: "1px solid #2a8a2a", borderRadius: 6, cursor: "pointer", letterSpacing: 1, fontFamily: "'Courier New', monospace" }}>✓ SEPETE EKLE</button>
-          </div>
-        )}
-
-        {/* Ürün Grid */}
-        <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(5, 1fr)", gap: 6 }}>
-          {filtreliUrunler.length === 0 && kasaArama.trim() && (
-            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "32px 0", color: S.soluk }}>
-              <div style={{ fontSize: 36, marginBottom: 8 }}>🔍</div>
-              <div style={{ fontSize: 13 }}>"{kasaArama}" bulunamadı</div>
-            </div>
-          )}
-          {filtreliUrunler.map(urun => (
-            <button key={urun.id} className="urun-btn" onClick={() => urunSec(urun)} 
-            style={{ 
-                background: seciliUrun?.id === urun.id ? "#3a0a0a" : S.kart, 
-                border: "2px solid " + (seciliUrun?.id === urun.id ? S.turuncu : S.border), 
-                borderRadius: 8, padding: "4px", textAlign: "center", color: S.metin, overflow: "hidden" 
-            }}>
-            {urun.resim ? (
-                <img src={urun.resim} style={{ width: newLocal, height: 50, objectFit: "cover", borderRadius: 4, marginBottom: 4 }} alt={urun.ad} />
-            ) : (
-                <div style={{ fontSize: 26, marginBottom: 2 }}>{urun.emoji}</div>
-            )}
-            <div style={{ fontSize: 10, fontWeight: "bold", lineHeight: 1.2 }}>{urun.ad}</div>
-            <div style={{ fontSize: 11, color: S.altin }}>{urun.fiyat}₺</div>
-            </button>
           ))}
         </div>
-
-        {/* Mobil: Sepet alt bar */}
-        {isMobile && (
-          <div style={{ background: "#0d0800", borderTop: "2px solid " + S.border, padding: "10px 12px", flexShrink: 0 }}>
-            {sepet.length > 0 && !odemeGosterge && (
-              <div style={{ maxHeight: 110, overflowY: "auto", marginBottom: 8 }}>
-                {sepet.map(item => (
-                  <div key={item._docId} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0", borderBottom: "1px solid #2a1a08" }}>
-                    <span style={{ fontSize: 13 }}>{item.emoji}</span>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: 11 }}>{item.ad}</span>
-                      <span style={{ fontSize: 9, color: S.soluk, marginLeft: 4 }}>{item.ekleyen}</span>
-                    </div>
-                    <button onClick={() => adetDegistir(item, -1)} style={{ background: "#2a0a0a", border: "none", color: S.kirmizi, cursor: "pointer", fontSize: 14, width: 20, height: 20, borderRadius: 4 }}>−</button>
-                    <span style={{ fontSize: 11, color: S.altin, minWidth: 14, textAlign: "center" }}>{item.adet}</span>
-                    <button onClick={() => adetDegistir(item, 1)} style={{ background: "#0a2a0a", border: "none", color: S.yesil, cursor: "pointer", fontSize: 14, width: 20, height: 20, borderRadius: 4 }}>+</button>
-                    <span style={{ fontSize: 11, color: S.altin, minWidth: 42, textAlign: "right" }}>{item.adet * item.fiyat}₺</span>
-                    <button onClick={() => sepettenCikar(item._docId)} style={{ background: "none", border: "none", color: "#663333", cursor: "pointer", fontSize: 12 }}>✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
+      )}
             {!odemeGosterge ? (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ flex: 1 }}>

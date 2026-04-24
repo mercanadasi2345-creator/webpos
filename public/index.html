@@ -223,6 +223,36 @@
     border-color: #FF6B35;
     background: #2a150a;
 }
+
+/* Ekranın tamamını kilitle */
+html, body { 
+    height: 100%; 
+    margin: 0; 
+    padding: 0; 
+    overflow: hidden; /* Dış çerçeve kaymasın */
+    position: fixed; /* iOS'ta zıplamayı engeller */
+    width: 100%;
+}
+
+#app { 
+    height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+}
+
+/* Sadece ürün listesi ve sepetin içi kaysın */
+#urun-grid, .sepet-scroll, #mobil-sepet-liste {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Kasa wrap düzeni */
+#kasa-wrap {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    overflow: hidden;
+}
 </style>
 </head>
 <body>
@@ -783,13 +813,50 @@ function buildKasa() {
     )
   );
 
-  // Arama
+ // Arama Kısmı (Gelişmiş Odak Korumalı)
+  const aramaInpId = "kasa-arama"; // ID'yi sabit tutuyoruz
+  
   const aramaWrap = h("div",{style:{padding:"8px 10px",background:"#130c04",borderBottom:"1px solid "+S.border,flexShrink:"0"}},
     h("div",{style:{position:"relative",display:"flex",alignItems:"center"}},
       h("span",{style:{position:"absolute",left:"10px",fontSize:"14px",color:S.soluk,pointerEvents:"none"}},"🔍"),
-      h("input",{id:"kasa-arama",style:{width:"100%",padding:"8px 32px",background:"#1c1208",border:"1px solid "+(kasaArama?S.turuncu:S.border),borderRadius:"8px",color:S.metin,fontSize:"13px",outline:"none"},placeholder:"Ürün ara...",value:kasaArama,
-        oninput:function(){kasaArama=this.value;if(kasaArama)aktifKategori="Tümü";buildKasa();}}),
-      kasaArama ? h("button",{style:{position:"absolute",right:"8px",background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"15px"},onclick:()=>{kasaArama="";buildKasa();}},"✕") : null
+      h("input",{
+        id: aramaInpId,
+        style:{
+          width:"100%",
+          padding:"8px 32px",
+          background:"#1c1208",
+          border:"1px solid "+(kasaArama?S.turuncu:S.border),
+          borderRadius:"8px",
+          color:S.metin,
+          fontSize:"13px",
+          outline:"none"
+        },
+        placeholder:"Ürün ara...",
+        value: kasaArama,
+        autocapitalize: "none",
+        autocomplete: "off",
+        oninput: function(e) {
+          kasaArama = this.value;
+          if(kasaArama) aktifKategori = "Tümü";
+          
+          // Sayfayı yeniden çiz
+          buildKasa();
+
+          // KRİTİK: Render bittikten sonra odağı geri ver ve imleci sona al
+          setTimeout(() => {
+            const inputEl = document.getElementById(aramaInpId);
+            if (inputEl) {
+              inputEl.focus();
+              // Cursor pozisyonunu sona taşır
+              inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+            }
+          }, 0);
+        }
+      }),
+      kasaArama ? h("button",{
+        style:{position:"absolute",right:"8px",background:"none",border:"none",color:S.soluk,cursor:"pointer",fontSize:"15px"},
+        onclick:()=>{kasaArama=""; buildKasa();}
+      },"✕") : null
     )
   );
 
@@ -994,42 +1061,36 @@ const page = h("div", {
 }
 
 function buildOdemePaneli(toplam, ustu, isMob) {
-  // Sabit ID veriyoruz ki render sonrası bulabilelim
   const inputId = "alinan-para-input";
 
+  // INPUT: Alınan Para
   const inp = h("input", {
     id: inputId,
     type: "number",
-    inputmode: "decimal", // Mobilde direkt sayı klavyesi açar
+    inputmode: "decimal",
     placeholder: isMob ? "Alınan para..." : "0",
     value: alinanPara,
     style: {
       width: "100%",
-      padding: isMob ? "9px" : "8px",
-      fontSize: "18px",
+      padding: isMob ? "12px" : "8px",
+      fontSize: "20px",
       fontWeight: "bold",
       background: isMob ? "#0d0800" : S.bg,
-      border: "1px solid " + S.border,
-      borderRadius: "6px",
+      border: "2px solid " + S.border,
+      borderRadius: "8px",
       color: S.altin,
       textAlign: "right",
       outline: "none"
     },
     oninput: function() {
-      // Değeri kaydet
       alinanPara = this.value;
-      
-      // Kasa ekranını güncelle
       buildKasa();
 
-      // RENDER SONRASI ODAK KORUMA:
-      // JavaScript tek iş parçacıklı olduğu için setTimeout(..., 0) 
-      // render biter bitmez çalışır ve odağı geri verir.
+      // Odak Koruma
       setTimeout(() => {
         const el = document.getElementById(inputId);
         if (el) {
           el.focus();
-          // Cursor'ı (imleci) sona atmak için değerini tazeliyoruz
           const v = el.value;
           el.value = "";
           el.value = v;
@@ -1038,45 +1099,55 @@ function buildOdemePaneli(toplam, ustu, isMob) {
     }
   });
 
-  const ustEl = alinanPara ?
-    h("div", {
-        style: {
-          background: ustu >= 0 ? "#0a2a0a" : "#2a0a0a",
-          border: "1px solid " + (ustu >= 0 ? "#2a7a2a" : "#7a2a2a"),
-          borderRadius: "6px",
-          padding: "6px 10px",
-          margin: "6px 0",
-          display: "flex",
-          justifyContent: "space-between"
-        }
-      },
-      h("span", { style: { fontSize: "11px", color: S.soluk } }, "ÜSTÜ:"),
-      h("span", { style: { fontSize: "18px", fontWeight: "bold", color: ustu >= 0 ? S.yesil : S.kirmizi } }, ustu >= 0 ? ustu + "₺" : "YETERSİZ")
-    ) :
-    null;
+  // PARA ÜSTÜ ALANI (Sabit yükseklik sayesinde input aşağı kaymaz)
+  const paraUstuAlani = h("div", { 
+    style: { 
+      height: "45px", // Sabit alan ayırdık
+      margin: "8px 0",
+      display: "flex",
+      alignItems: "center"
+    } 
+  }, 
+    alinanPara ? h("div", {
+      style: {
+        width: "100%",
+        background: ustu >= 0 ? "#0a2a0a" : "#2a0a0a",
+        border: "1px solid " + (ustu >= 0 ? "#2a7a2a" : "#7a2a2a"),
+        borderRadius: "6px",
+        padding: "8px 12px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        animation: "fadeInFast 0.1s ease"
+      }
+    },
+      h("span", { style: { fontSize: "11px", color: S.soluk } }, "PARA ÜSTÜ:"),
+      h("span", { style: { fontSize: "18px", fontWeight: "bold", color: ustu >= 0 ? S.yesil : S.kirmizi } }, 
+        ustu >= 0 ? ustu + "₺" : "YETERSİZ"
+      )
+    ) : null
+  );
 
-  return h("div", {},
+  return h("div", { style: { padding: "4px 0" } },
     isMob ? h("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: "8px"
-        }
+        style: { display: "flex", justifyContent: "space-between", marginBottom: "10px" }
       },
       h("span", { style: { color: S.soluk, fontSize: "12px" } }, "TOPLAM:"),
-      h("span", { style: { color: S.altin, fontSize: "20px", fontWeight: "bold" } }, toplam + "₺")
+      h("span", { style: { color: S.altin, fontSize: "22px", fontWeight: "bold" } }, toplam + "₺")
     ) : null,
+    
     inp,
-    ustEl,
-    h("div", { style: { display: "flex", gap: "8px", marginTop: "6px" } },
+    paraUstuAlani, // Artık inputu aşağı iten değil, içinde beliren alan
+    
+    h("div", { style: { display: "flex", gap: "8px" } },
       h("button", {
         style: {
           flex: "1",
-          padding: "9px 0",
+          padding: "12px 0",
           background: S.kart,
           color: S.soluk,
           border: "1px solid " + S.border,
-          borderRadius: "6px",
+          borderRadius: "8px",
           cursor: "pointer"
         },
         onclick: () => {
@@ -1088,13 +1159,13 @@ function buildOdemePaneli(toplam, ustu, isMob) {
       h("button", {
         style: {
           flex: "2",
-          padding: "9px 0",
+          padding: "12px 0",
           fontWeight: "bold",
-          fontSize: "13px",
+          fontSize: "14px",
           background: ustu >= 0 && alinanPara ? "#1a5a1a" : "#1a2a0a",
           color: ustu >= 0 && alinanPara ? "#aaffaa" : "#4a6a4a",
           border: "1px solid #2a7a2a",
-          borderRadius: "6px",
+          borderRadius: "8px",
           cursor: "pointer"
         },
         onclick: tahsilEt
